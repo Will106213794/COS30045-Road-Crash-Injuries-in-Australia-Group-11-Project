@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Growing Older Group | About the Data</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main id="main">
+    <section class="banner bg-grid" aria-labelledby="dataTitle">
+      <div class="container">
+        <p class="eyebrow">Step 3 of 3 &middot; About the data</p>
+        <h1 id="dataTitle">Where the numbers come from</h1>
+        <p>Three BITRE files, eleven years, more than 90,000 rows. This page explains the source, what each column means, how we cleaned it, and where it falls short. You can also browse and download the data below.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="container grid grid-2" style="align-items:start">
+        <div class="reveal">
+          <h2>Source</h2>
+          <p>The data comes from the <strong>Bureau of Infrastructure and Transport Research Economics (BITRE)</strong> <em>Hospitalised Injury</em> publication (BITRE, 2023). BITRE builds it from the Australian Institute of Health and Welfare (AIHW) National Hospital Morbidity Database, which records every hospital admission in Australia.</p>
+          <p>We use the national file (<code>hospitalisation_injury_publication_sep2023.xlsx</code>), <code>raw</code> tab, covering calendar years 2011 to 2021.</p>
+          <h3>What one row means</h3>
+          <p>Each row is one combination of year, month, remoteness area, age group, sex, road user and counterparty (what they crashed with). The <strong>Hospitalisations</strong> column says how many people were admitted for that combination, and <strong>Bed days</strong> says how many days they spent in hospital in total.</p>
+        </div>
+        <div class="card reveal">
+          <h3>The data at a glance</h3>
+          <div class="grid grid-2" style="margin-top:12px" id="glance" aria-live="polite">
+            <div><div class="kpi-value" id="gRows">&hellip;</div><div class="kpi-label muted">rows used</div></div>
+            <div><div class="kpi-value" id="gHosp">&hellip;</div><div class="kpi-label muted">hospitalisations</div></div>
+            <div><div class="kpi-value" id="gBed">&hellip;</div><div class="kpi-label muted">bed days</div></div>
+            <div><div class="kpi-value">2011 to 2021</div><div class="kpi-label muted">calendar years</div></div>
+          </div>
+          <p style="margin-top:16px"><a class="btn btn-primary" href="data/road_crash_hospitalisations.csv" download>&#8681; Download the full clean CSV</a></p>
+        </div>
+      </div>
+    </section>
+
+
+    <section style="padding-top:0" aria-labelledby="filesTitle">
+      <div class="container">
+        <h2 id="filesTitle">The three data files</h2>
+        <p class="muted">Each BITRE Excel file was read once in KNIME, cleaned, and written out once as a CSV (one reader and one writer per raw file).</p>
+        <div class="grid grid-3">
+          <div class="card reveal">
+            <span class="num-badge">01</span>
+            <h3>National</h3>
+            <p class="muted">Every road crash hospitalisation by year, month, remoteness, age group (7 groups), sex, road user (12 types) and counterparty. Used by the story and dashboard tabs 01 to 04.</p>
+            <p><span class="tag">86,140 rows</span> <span class="tag">2011 to 2021</span></p>
+            <a class="btn btn-primary" href="data/road_crash_hospitalisations.csv" download>&#8681; national CSV</a>
+          </div>
+          <div class="card reveal">
+            <span class="num-badge">02</span>
+            <h3>States and territories</h3>
+            <p class="muted">Six-monthly counts for each of the 8 states and territories, in five breakdowns: Overall, Age Group, Sex, Road user and Counterparty. Used by chapter 7 and dashboard tab 05.</p>
+            <p><span class="tag">3,835 rows</span> <span class="tag" id="npState">n.p. cells</span></p>
+            <a class="btn btn-primary" href="data/state_territory_hospitalisations.csv" download>&#8681; state CSV</a>
+          </div>
+          <div class="card reveal">
+            <span class="num-badge">03</span>
+            <h3>First Nations</h3>
+            <p class="muted">Six-monthly counts for First Nations and non-Indigenous people by Age (6 groups, one 65+ group), Road user, Remoteness and Counterparty. Used by chapter 8 and dashboard tab 06.</p>
+            <p><span class="tag">1,187 rows</span> <span class="tag" id="npFN">n.p. cells</span></p>
+            <a class="btn btn-primary" href="data/first_nations_hospitalisations.csv" download>&#8681; First Nations CSV</a>
+          </div>
+        </div>
+        <h3 style="margin-top:28px">Columns in the state and First Nations files</h3>
+        <div class="table-wrap reveal" tabindex="0" role="region" aria-label="State and First Nations columns">
+          <table class="wrap">
+            <thead><tr><th scope="col">Column</th><th scope="col">Meaning</th><th scope="col">Example</th></tr></thead>
+            <tbody>
+              <tr><td>Calendar year</td><td>Year of admission</td><td>2021</td></tr>
+              <tr><td>6-monthly</td><td>Half of the year. The site adds the two halves together.</td><td>Jan-Jun</td></tr>
+              <tr><td>Breakdown</td><td>Which of the five side-by-side BITRE tables the row came from</td><td>Age Group</td></tr>
+              <tr><td>Category</td><td>The value inside that breakdown (an age group, a road user, a sex, a remoteness area)</td><td>65-74</td></tr>
+              <tr><td>state or territory</td><td>State file only</td><td>Tas</td></tr>
+              <tr><td>First Nations status</td><td>First Nations file only: First Nations people or Non-Indigenous</td><td>First Nations people</td></tr>
+              <tr><td>Hospitalisations / count of cases</td><td>Admissions, not counting people who died in hospital within 30 days. Blank = n.p.</td><td>5223</td></tr>
+              <tr><td>Bed days</td><td>Days in hospital, same exclusion. Blank = n.p.</td><td>26089</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-2" style="margin-top:20px">
+          <div class="card reveal"><h3>What "n.p." means</h3><p class="muted">"Not published": BITRE hides very small counts to protect privacy. They are blank in the CSV. The site never treats them as zero; charts show them with stripes or hollow points, and tooltips say "includes n.p. values". ACT, NT and Tasmania have the most.</p></div>
+          <div class="card reveal"><h3>Check before you sum</h3><p class="muted">In the First Nations export, the rows labelled "Overall" are an exact copy of the "Age" rows, so the site leaves them out. Adding every breakdown together would count each person several times; always pick one breakdown.</p></div>
+        </div>
+      </div>
+    </section>
+    <section style="padding-top:0">
+      <div class="container">
+        <h2>Data dictionary (national file)</h2>
+        <div class="table-wrap reveal" tabindex="0">
+          <table>
+            <thead><tr><th scope="col">Column</th><th scope="col">Type</th><th scope="col">Meaning</th><th scope="col">Example</th></tr></thead>
+            <tbody>
+              <tr><td>Calendar year</td><td>Number</td><td>Year of the hospital admission</td><td>2021</td></tr>
+              <tr><td>Month</td><td>Text</td><td>Month of admission</td><td>April</td></tr>
+              <tr><td>ABS remoteness area</td><td>Text</td><td>Where the person lives: Major Cities, Regional, Remote, or Missing</td><td>Regional</td></tr>
+              <tr><td>Cause of injury</td><td>Text</td><td>Type of injury. Only Traffic (road crash) rows are kept</td><td>Traffic</td></tr>
+              <tr><td>Age group</td><td>Text</td><td>0-7, 8-16, 17-25, 26-39, 40-64, 65-74, 75+</td><td>65-74</td></tr>
+              <tr><td>Sex</td><td>Text</td><td>Male or Female</td><td>Female</td></tr>
+              <tr><td>Road user</td><td>Text</td><td>The injured person's role, e.g. Car driver, Pedal cyclist, Pedestrian (12 types)</td><td>Pedal cyclist</td></tr>
+              <tr><td>Counterparty</td><td>Text</td><td>What they collided with, e.g. Car, pick-up truck or van</td><td>Fixed or stationary object</td></tr>
+              <tr><td>Bed days</td><td>Number</td><td>Total days spent in hospital</td><td>21</td></tr>
+              <tr><td>Hospitalisations</td><td>Number</td><td>Number of admissions, not counting people who died in hospital</td><td>5</td></tr>
+              <tr><td><em>Older group</em> (added)</td><td>Text</td><td>Older (65+) for 65-74 and 75+, otherwise Under 65</td><td>Older (65+)</td></tr>
+              <tr><td><em>Road user group</em> (added)</td><td>Text</td><td>Car occupants, Motorcyclist, Pedal cyclist, Pedestrian, Other</td><td>Car occupants</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="banner bg-dawn" aria-labelledby="cleanTitle">
+      <div class="container grid grid-2" style="align-items:start">
+        <div>
+          <p class="eyebrow">Cleaning</p>
+          <h2 id="cleanTitle">How we prepared it</h2>
+          <ol style="padding-left:20px">
+            <li>In KNIME: read the raw tab, checked for duplicate rows (none found) and missing values, kept Traffic rows only, and removed columns we do not use.</li>
+            <li>Fixed the age label <code>8-16</code>, which Excel can turn into the date <code>16-Aug</code>.</li>
+            <li>Removed rows with an unknown age or an unknown sex. This is a very small number of hospitalisations (see the counts on the right).</li>
+            <li>Added two grouping columns: <em>Older group</em> and <em>Road user group</em>.</li>
+            <li>Removed an invisible character (a byte-order mark) from the first column name, which stopped D3 reading the year column.</li>
+          </ol>
+        </div>
+        <div class="glass" id="cleanCounts" aria-live="polite">
+          <h3>Rows before and after the browser check</h3>
+          <p class="muted">Loading&hellip;</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <h2>Limitations</h2>
+        <div class="grid grid-2">
+          <div class="card reveal"><h3>Counts, not rates</h3><p class="muted">BITRE gives counts, not rates per 100,000. We checked with ABS population figures: people aged 65+ grew by about 42% from 2011 to 2021 and their hospitalisations by 41%, so the rate per older person stayed about the same (about 126 per 100,000). See the Reality check in the story.</p></div>
+          <div class="card reveal"><h3>COVID-19 in 2020</h3><p class="muted">Lockdowns reduced travel in 2020, so the drop that year is unusual. We point it out on the charts rather than removing it.</p></div>
+          <div class="card reveal"><h3>Bed days change in 2015</h3><p class="muted">Bed days rise by about a quarter for every age group between 2014 and 2015 while admissions barely change. This may reflect a change in recording, so we compare age groups within the same year.</p></div>
+          <div class="card reveal"><h3>Deaths in hospital</h3><p class="muted">Hospitalisations leave out people who died in hospital, and the death columns are empty for 2021, so we do not analyse deaths. Bed days may still include some of those stays.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding-top:0" aria-labelledby="exploreTitle">
+      <div class="container">
+        <h2 id="exploreTitle">Browse the national data</h2>
+        <p class="muted">Filter the rows, then download exactly what you see.</p>
+        <form class="filters" id="tFilters" onsubmit="return false" aria-label="Table filters">
+          <div class="field"><label for="tYear">Year</label><select id="tYear"><option value="All">All years</option></select></div>
+          <div class="field"><label for="tAge">Age group</label><select id="tAge"><option value="All">All ages</option></select></div>
+          <div class="field"><label for="tSex">Sex</label><select id="tSex"><option value="All">All</option><option>Male</option><option>Female</option></select></div>
+          <div class="field"><label for="tRoad">Road user</label><select id="tRoad"><option value="All">All road users</option></select></div>
+          <div class="field"><label for="tSearch">Search text</label><input type="search" id="tSearch" placeholder="e.g. Regional, Train"></div>
+        </form>
+        <div class="table-tools">
+          <p class="status" id="tStatus" role="status" aria-live="polite" style="margin:0">Loading&hellip;</p>
+          <div class="pager">
+            <button class="btn" type="button" id="tPrev">&larr; Prev</button>
+            <span id="tPage" class="muted">Page 1</span>
+            <button class="btn" type="button" id="tNext">Next &rarr;</button>
+            <button class="btn btn-primary" type="button" id="tDownload">&#8681; Download filtered CSV</button>
+          </div>
+        </div>
+        <div id="tTable"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/datapage.js"></script>
+</body>
+</html>

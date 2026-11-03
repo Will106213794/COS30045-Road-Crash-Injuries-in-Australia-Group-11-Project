@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" role="img" aria-label="Cartoon of a patient in a hospital bed with a drip and a clock">
+<title>Cartoon of a patient in a hospital bed with a drip and a clock</title>
+<rect x="0" y="0" width="240" height="180" rx="28" fill="#dcfce7"/>
+
+<rect x="30" y="96" width="170" height="20" rx="6" fill="#ffffff" stroke="#1f2937" stroke-width="4"/>
+<path d="M30 70 V140 M200 92 V140" stroke="#1f2937" stroke-width="6" stroke-linecap="round"/>
+<rect x="40" y="82" width="40" height="18" rx="9" fill="#ffffff" stroke="#1f2937" stroke-width="3"/>
+<circle cx="66" cy="80" r="14" fill="#f2c9a0" stroke="#1f2937" stroke-width="2"/>
+<path d="M53 76 Q56 62 70 64 Q80 68 78 78" fill="#ffffff" stroke="#1f2937" stroke-width="2"/>
+<path d="M54 74 h26" stroke="#ef4444" stroke-width="2"/>
+<path d="M80 96 Q120 82 160 96" fill="#86efac" stroke="#1f2937" stroke-width="3"/>
+<path d="M150 92 L182 70" stroke="#ffffff" stroke-width="16" stroke-linecap="round"/><path d="M150 92 L182 70" stroke="#1f2937" stroke-width="3" stroke-dasharray="4 6"/>
+<path d="M176 74 L190 60 L180 52" fill="none" stroke="#94a3b8" stroke-width="3"/>
+<path d="M214 30 V140 M206 140 h16" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+<rect x="200" y="34" width="20" height="28" rx="6" fill="#bae6fd" stroke="#1f2937" stroke-width="3"/>
+<path d="M210 62 Q200 80 180 84" fill="none" stroke="#94a3b8" stroke-width="2"/>
+<circle cx="50" cy="40" r="20" fill="#ffffff" stroke="#1f2937" stroke-width="4"/><path d="M50 28 V40 L58 46" stroke="#1f2937" stroke-width="4" stroke-linecap="round" fill="none"/>
+<text x="84" y="46" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#1f2937">Day 10</text>
+</svg>

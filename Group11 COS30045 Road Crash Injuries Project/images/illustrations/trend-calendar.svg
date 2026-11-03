@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" role="img" aria-label="Cartoon of a calendar with a rising line and a magnifying glass">
+<title>Cartoon of a calendar with a rising line and a magnifying glass</title>
+<rect x="0" y="0" width="240" height="180" rx="28" fill="#fef3c7"/>
+
+<rect x="38" y="30" width="130" height="122" rx="14" fill="#ffffff" stroke="#1f2937" stroke-width="5"/>
+<rect x="38" y="30" width="130" height="28" rx="14" fill="#f59e0b" stroke="#1f2937" stroke-width="5"/>
+<path d="M66 22 V40 M140 22 V40" stroke="#1f2937" stroke-width="6" stroke-linecap="round"/>
+<text x="103" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#1f2937">2011 to 2021</text>
+<path d="M54 136 L78 124 L98 126 L118 104 L136 108 L152 80" fill="none" stroke="#2563eb" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="152" cy="80" r="7" fill="#ef4444" stroke="#1f2937" stroke-width="3"/>
+<circle cx="180" cy="120" r="24" fill="#e0f2fe" fill-opacity="0.8" stroke="#1f2937" stroke-width="6"/>
+<path d="M197 137 L216 156" stroke="#1f2937" stroke-width="9" stroke-linecap="round"/>
+</svg>

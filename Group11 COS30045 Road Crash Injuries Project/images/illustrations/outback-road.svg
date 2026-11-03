@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" role="img" aria-label="Cartoon of a long road through red outback country">
+<title>Cartoon of a long road through red outback country</title>
+<rect x="0" y="0" width="240" height="180" rx="28" fill="#fdba74"/>
+
+<rect x="0" y="0" width="240" height="96" rx="28" fill="#fed7aa"/>
+<circle cx="180" cy="60" r="24" fill="#fef08a"/>
+<path d="M0 96 H240 V152 Q240 180 212 180 H28 Q0 180 0 152 Z" fill="#c2410c"/>
+<path d="M112 96 L128 96 L176 180 L64 180 Z" fill="#57534e"/>
+<path d="M120 102 V112 M120 124 V138 M120 152 V172" stroke="#fde68a" stroke-width="4" stroke-linecap="round"/>
+<path d="M30 96 L40 70 L50 96 Z" fill="#a16207" stroke="#1f2937" stroke-width="2"/>
+<path d="M200 130 V100" stroke="#78350f" stroke-width="6"/><circle cx="200" cy="94" r="16" fill="#65a30d" stroke="#1f2937" stroke-width="2"/>
+<rect x="104" y="122" width="32" height="16" rx="5" fill="#ffffff" stroke="#1f2937" stroke-width="3"/><rect x="110" y="114" width="20" height="10" rx="3" fill="#bfdbfe" stroke="#1f2937" stroke-width="2"/>
+<path d="M18 120 q6 -10 12 0 M60 140 q6 -10 12 0" stroke="#7c2d12" stroke-width="3" fill="none"/>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" role="img" aria-label="Cartoon of an older person with a walking stick on a pedestrian crossing">
+<title>Cartoon of an older person with a walking stick on a pedestrian crossing</title>
+<rect x="0" y="0" width="240" height="180" rx="28" fill="#ede9fe"/>
+
+<rect x="0" y="128" width="240" height="52" fill="#475569"/>
+<g fill="#f8fafc"><rect x="18" y="138" width="26" height="34" rx="4"/><rect x="62" y="138" width="26" height="34" rx="4"/><rect x="106" y="138" width="26" height="34" rx="4"/><rect x="150" y="138" width="26" height="34" rx="4"/><rect x="194" y="138" width="26" height="34" rx="4"/></g>
+<circle cx="120" cy="40" r="15" fill="#e0ac69" stroke="#1f2937" stroke-width="2"/>
+<circle cx="118" cy="22" r="9" fill="#e5e7eb" stroke="#1f2937" stroke-width="2"/>
+<path d="M106 38 Q106 26 120 26 Q134 26 134 38" fill="#e5e7eb"/>
+<circle cx="125" cy="41" r="4" fill="none" stroke="#1f2937" stroke-width="2"/>
+<path d="M120 56 Q108 76 112 104 L132 104 Q136 78 124 56 Z" fill="#a855f7" stroke="#1f2937" stroke-width="4" stroke-linejoin="round"/>
+<path d="M116 104 L110 132 M128 104 L134 132" stroke="#374151" stroke-width="8" stroke-linecap="round"/>
+<path d="M126 66 L146 86" stroke="#a855f7" stroke-width="8" stroke-linecap="round"/>
+<path d="M146 86 L150 132 M146 86 q-2 -8 6 -8" fill="none" stroke="#92400e" stroke-width="5" stroke-linecap="round"/>
+<rect x="190" y="40" width="22" height="44" rx="6" fill="#1f2937"/><circle cx="201" cy="52" r="6" fill="#ef4444"/><circle cx="201" cy="72" r="6" fill="#22c55e"/>
+<path d="M201 84 V128" stroke="#1f2937" stroke-width="5"/>
+</svg>

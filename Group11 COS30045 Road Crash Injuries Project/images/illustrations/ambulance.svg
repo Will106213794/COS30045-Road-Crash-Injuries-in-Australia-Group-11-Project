@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" role="img" aria-label="Cartoon of an ambulance with flashing lights">
+<title>Cartoon of an ambulance with flashing lights</title>
+<rect x="0" y="0" width="240" height="180" rx="28" fill="#fee2e2"/>
+
+<path d="M0 150 H240" stroke="#fca5a5" stroke-width="10"/>
+<path d="M30 132 L30 72 Q30 64 38 64 L150 64 L150 132 Z" fill="#ffffff" stroke="#1f2937" stroke-width="5" stroke-linejoin="round"/>
+<path d="M150 132 L150 80 L186 80 L212 106 L212 132 Z" fill="#ffffff" stroke="#1f2937" stroke-width="5" stroke-linejoin="round"/>
+<path d="M158 88 L182 88 L200 106 L158 106 Z" fill="#bfdbfe" stroke="#1f2937" stroke-width="4" stroke-linejoin="round"/>
+<rect x="30" y="112" width="182" height="10" fill="#ef4444"/>
+<path d="M82 78 h16 v16 h16 v16 h-16 v16 h-16 v-16 h-16 v-16 h16 z" transform="translate(0,-8) scale(1 0.8)" fill="#ef4444"/>
+<rect x="70" y="50" width="40" height="14" rx="5" fill="#2563eb" stroke="#1f2937" stroke-width="3"/><rect x="90" y="50" width="20" height="14" rx="5" fill="#ef4444"/>
+<path d="M60 44 l-8 -8 M120 44 l8 -8 M90 40 v-10" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+<circle cx="72" cy="134" r="17" fill="#374151" stroke="#1f2937" stroke-width="5"/><circle cx="72" cy="134" r="4" fill="#1f2937"/><circle cx="180" cy="134" r="17" fill="#374151" stroke="#1f2937" stroke-width="5"/><circle cx="180" cy="134" r="4" fill="#1f2937"/>
+</svg>
