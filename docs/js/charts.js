@@ -28,7 +28,7 @@ Charts.frame = (el, o, m) => {
   el.innerHTML = "";
   const width = el.clientWidth || 640;
   const height = o.fill
-    ? Math.max(340, (el.clientHeight || Math.round(window.innerHeight * 0.6)) - (o.reserve || 0))
+    ? Math.max(o.minH || 120, (el.clientHeight || Math.round(window.innerHeight * 0.6)) - (o.reserve || 0))
     : o.height || Math.round(Math.max(260, Math.min(430, width * 0.58)));
   const svg = d3
     .select(el)
@@ -154,7 +154,7 @@ Charts.line = (el, o) => {
   const small = el.clientWidth < 520;
   const m = { top: 28, right: small ? 70 : 118, bottom: 40, left: small ? 50 : 66 };
   const withLegend = o.legend !== false && o.series.length > 1;
-  const f = Charts.frame(el, { ...o, reserve: withLegend ? 44 : 0 }, m);
+  const f = Charts.frame(el, { ...o, reserve: withLegend ? o.legendSpace || 44 : 0 }, m);
   f.marginLeft = m.left;
 
   // legend buttons: click to show or hide a line
@@ -254,8 +254,11 @@ Charts.line = (el, o) => {
   });
 
   // direct labels at the end of each line
+  // when the chart is too short for every label, only the highlighted lines keep theirs
+  let labelled = shown.filter((s) => s.values.length);
+  if (labelled.length * 15 > f.h && labelled.some((s) => s.emphasis)) labelled = labelled.filter((s) => s.emphasis);
   const labels = Charts.spread(
-    shown.filter((s) => s.values.length).map((s) => {
+    labelled.map((s) => {
       const last = s.values[s.values.length - 1];
       return { s, y: y(last.y), x: x(last.x) };
     }),
@@ -278,7 +281,7 @@ Charts.bar = (el, o) => {
   const redraw = () => Charts.bar(el, o);
   const small = el.clientWidth < 520;
   const m = { top: 28, right: 16, bottom: 40, left: small ? 50 : 66 };
-  const f = Charts.frame(el, { ...o, reserve: o.sortable ? 44 : 0 }, m);
+  const f = Charts.frame(el, { ...o, reserve: o.sortable ? o.legendSpace || 44 : 0 }, m);
   f.marginLeft = m.left;
   const mode = Charts.sortSwitch(el, f, o, redraw);
   const data = mode === "value" ? [...o.data].sort((a, b) => b.y - a.y) : o.data;
@@ -329,7 +332,7 @@ Charts.hbar = (el, o) => {
   const small = el.clientWidth < 520;
   const m = { top: 12, right: o.labelSpace ? (small ? o.labelSpace * 0.8 : o.labelSpace) : small ? 56 : 72, bottom: 36, left: small ? 104 : 140 };
   const height = o.fill ? undefined : Math.max(220, o.data.length * (small ? 46 : 54) + 48);
-  const f = Charts.frame(el, { ...o, height, reserve: o.sortable ? 44 : 0 }, m);
+  const f = Charts.frame(el, { ...o, height, reserve: o.sortable ? o.legendSpace || 44 : 0 }, m);
   const mode = Charts.sortSwitch(el, f, o, redraw);
   const data = mode === "value" ? [...o.data].sort((a, b) => b.value - a.value) : o.data;
   const fmt = o.format || d3.format(",");
@@ -353,7 +356,8 @@ Charts.hbar = (el, o) => {
     .attr("x", (d) => x(Math.min(0, d.value)))
     .attr("width", (d) => Math.abs(x(d.value) - x(0)))
     .attr("rx", 4)
-    .attr("fill", (d) => d.colour);
+    .attr("fill", (d) => d.colour)
+    .attr("opacity", (d) => (o.selected == null || d.label === o.selected ? 1 : 0.35));
   Charts.tween(el, bars, (d) => "hb:" + d.label, ["x", "y", "width", "height"], () => ({ x: x(0), width: 0 }));
   App.tip.bind(bars, o.tip, { onSelect: o.onSelect });
 
@@ -375,7 +379,7 @@ Charts.groupedHbar = (el, o) => {
   const small = el.clientWidth < 520;
   const m = { top: 8, right: 60, bottom: 36, left: small ? 104 : 140 };
   const height = o.fill ? undefined : Math.max(260, o.categories.length * o.groups.length * 22 + o.categories.length * 18 + 48);
-  const f = Charts.frame(el, { ...o, height, reserve: o.sortable ? 44 : 0 }, m);
+  const f = Charts.frame(el, { ...o, height, reserve: o.sortable ? o.legendSpace || 44 : 0 }, m);
   const mode = Charts.sortSwitch(el, f, o, redraw);
   const cats = mode === "value" ? [...o.categories].sort((a, b) => o.value(b, o.groups[0].key) - o.value(a, o.groups[0].key)) : o.categories;
   const fmt = o.format || d3.format(",");
@@ -397,11 +401,12 @@ Charts.groupedHbar = (el, o) => {
     .attr("x", 0)
     .attr("width", (d) => x(d.value))
     .attr("rx", 3)
-    .attr("fill", (d) => d.group.colour);
+    .attr("fill", (d) => d.group.colour)
+    .attr("opacity", (d) => (o.selected == null || d.category === o.selected ? 1 : 0.35));
   Charts.tween(el, bars, (d) => "gb:" + d.category + ":" + d.group.key, ["y", "width"], () => ({ width: 0 }));
   App.tip.bind(bars, o.tip, { onSelect: o.onSelect });
 
-  const vl = f.g.append("g").selectAll("text").data(rows).join("text").attr("class", "value-label").style("font-size", "11px")
+  const vl = f.g.append("g").selectAll("text").data(y1.bandwidth() >= 10 ? rows : []).join("text").attr("class", "value-label").style("font-size", "11px")
     .attr("x", (d) => x(d.value) + 4)
     .attr("y", (d) => y0(d.category) + y1(d.group.key) + y1.bandwidth() / 2).attr("dy", "0.35em")
     .text((d) => fmt(d.value));
@@ -445,8 +450,8 @@ Charts.dumbbell = (el, o) => {
   const b = rowG.append("circle").attr("cx", (d) => x(d.b)).attr("r", 7).attr("fill", bCol);
   Charts.tween(el, a, (d) => "a:" + d.label, ["cx"]);
   Charts.tween(el, b, (d) => "b:" + d.label, ["cx"], function (d) { return { cx: x(d.a) }; });
-  App.tip.bind(a, (d) => o.tip(d, "a"));
-  App.tip.bind(b, (d) => o.tip(d, "b"));
+  App.tip.bind(a, (d) => o.tip(d, "a"), { onSelect: o.onSelect });
+  App.tip.bind(b, (d) => o.tip(d, "b"), { onSelect: o.onSelect });
   const vl = rowG.append("text").attr("class", "value-label").attr("x", (d) => x(Math.max(d.a, d.b)) + 12).attr("dy", "0.35em").text((d) => fmt(d.b));
   Charts.tween(el, vl, (d) => "dv:" + d.label, ["x"]);
 };
@@ -554,4 +559,61 @@ Charts.butterfly = (el, o) => {
     .attr("text-anchor", (d) => (isLeft(d) ? "end" : "start"))
     .text((d) => fmt(d.value));
   Charts.tween(el, vl, (d) => "bv:" + d.side.key + ":" + d.category, ["x"]);
+};
+
+/* ---------------------------------------------------------
+   Stacked columns (e.g. each year split into Under 65 and 65+)
+   o.cats: x categories, o.parts: [{key, label, colour}] bottom to top,
+   o.value(cat, key), o.focusX (highlighted column), o.onSelect(cat), o.tip(d)
+   --------------------------------------------------------- */
+Charts.stack = (el, o) => {
+  const small = el.clientWidth < 520;
+  const m = { top: 30, right: 12, bottom: 30, left: small ? 46 : 58 };
+  const f = Charts.frame(el, o, m);
+  f.marginLeft = m.left;
+  const rows = o.cats.flatMap((c) => {
+    let y0 = 0;
+    return o.parts.map((p) => {
+      const v = o.value(c, p.key) || 0;
+      const r = { cat: c, part: p, value: v, y0, y1: y0 + v };
+      y0 += v;
+      return r;
+    });
+  });
+  const totals = new Map(o.cats.map((c) => [c, d3.sum(rows.filter((r) => r.cat === c), (r) => r.value)]));
+  const x = d3.scaleBand().domain(o.cats).range([0, f.w]).padding(0.2);
+  const y = d3.scaleLinear().domain([0, (d3.max(totals.values()) || 1) * 1.12]).nice().range([f.h, 0]);
+  const yFormat = o.yFormat || d3.format("~s");
+
+  f.g.append("g").attr("class", "grid-lines").call(d3.axisLeft(y).ticks(4).tickSize(-f.w).tickFormat(""));
+  f.g.append("g").attr("class", "axis").attr("transform", `translate(0,${f.h})`)
+    .call(d3.axisBottom(x).tickValues(small ? o.cats.filter((d, i) => i % 2 === 0) : o.cats).tickFormat((d) => (small ? "'" + String(d).slice(2) : d)));
+  f.g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(4).tickFormat(yFormat));
+  Charts.yTitle(f.g, f, o.yLabel);
+
+  // small legend in the top margin
+  const leg = f.g.append("g").attr("transform", "translate(0,-16)");
+  let lx = 0;
+  [...o.parts].reverse().forEach((p) => {
+    leg.append("rect").attr("x", lx).attr("y", -9).attr("width", 12).attr("height", 12).attr("rx", 3).attr("fill", p.colour);
+    const t = leg.append("text").attr("x", lx + 17).attr("y", 1).attr("class", "axis-title").text(p.label);
+    lx += 17 + (t.node().getComputedTextLength ? t.node().getComputedTextLength() : 60) + 16;
+  });
+
+  const bars = f.g.append("g").selectAll("rect").data(rows).join("rect")
+    .attr("x", (d) => x(d.cat))
+    .attr("width", x.bandwidth())
+    .attr("y", (d) => y(d.y1))
+    .attr("height", (d) => Math.max(0, y(d.y0) - y(d.y1)))
+    .attr("fill", (d) => d.part.colour)
+    .attr("opacity", (d) => (o.focusX === undefined || d.cat === o.focusX ? 1 : 0.5));
+  Charts.tween(el, bars, (d) => "st:" + d.cat + ":" + d.part.key, ["y", "height", "x", "width"], () => ({ y: f.h, height: 0 }));
+  App.tip.bind(bars, o.tip, { onSelect: o.onSelect ? (d) => o.onSelect(d.cat) : null });
+
+  // total above the highlighted column
+  const lab = o.cats.filter((c) => c === o.focusX).map((c) => ({ c, v: totals.get(c) }));
+  const vl = f.g.append("g").selectAll("text").data(lab).join("text").attr("class", "value-label")
+    .attr("x", (d) => x(d.c) + x.bandwidth() / 2).attr("y", (d) => y(d.v) - 6).attr("text-anchor", "middle")
+    .text((d) => (o.valueFormat || d3.format(","))(d.v));
+  Charts.tween(el, vl, () => "stl", ["x", "y"]);
 };

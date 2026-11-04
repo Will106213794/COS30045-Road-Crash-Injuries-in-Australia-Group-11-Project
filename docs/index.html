@@ -3,221 +3,220 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Growing Older Group | Home</title>
-  <meta name="description" content="Road crash hospitalisations in Australia, 2011 to 2021: why people aged 65 and over are a growing part of the story.">
+  <title>The Growing Older Group | Road Crash Injury Report</title>
+  <meta name="description" content="Interactive report on road crash hospitalisations in Australia, 2011 to 2021, focusing on people aged 65 and over. COS30045 Group 11.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/report.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-  <header id="site-header"></header>
+<!--
+  One HTML file, seven report pages (like Power BI pages).
+  The page tabs at the bottom only show and hide <section class="page">,
+  so the whole report stays on this one page and never scrolls on a laptop or desktop.
+-->
+<div class="app" id="app">
 
-  <main id="main">
-    <!-- Hero with background picture -->
-    <section class="hero bg-highway" aria-labelledby="heroTitle">
-      <div class="container">
-        <p class="eyebrow">COS30045 Data Visualisation &middot; Group 11</p>
-        <h1 id="heroTitle">Road Crash Injuries Across Ages:<br>The Growing Older Group</h1>
-        <p class="lead">Between 2011 and 2021, more than 410,000 people were admitted to hospital in Australia after a road crash. Most were young or middle aged. But the fastest growth came from people aged 65 and over, and they stay in hospital much longer.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="story.html">Read the story &rarr;</a>
-          <a class="btn btn-ghost" href="dashboard.html">Open the dashboard</a>
-        </div>
-
-        <div class="grid grid-4" style="margin-top:40px" id="heroKpis" aria-live="polite">
-          <div class="card kpi accent"><div class="kpi-value" id="kOlderChange">&hellip;</div><div class="kpi-label" id="kOlderChangeLabel">Hospitalisations aged 65+, 2011 to 2021</div></div>
-          <div class="card kpi"><div class="kpi-value" id="kShare">&hellip;</div><div class="kpi-label">Older share of all road crash hospitalisations</div></div>
-          <div class="card kpi"><div class="kpi-value" id="kBedShare">&hellip;</div><div class="kpi-label">Share of hospital bed days used by people 65+ in 2021</div></div>
-          <div class="card kpi"><div class="kpi-value" id="kCyclists">&hellip;</div><div class="kpi-label" id="kCyclistsLabel">Cyclists aged 65+ in hospital</div></div>
+  <!-- ===== Top bar: logo, title, report actions ===== -->
+  <header class="topbar">
+    <a class="skip-link" href="#main">Skip to report</a>
+    <div class="brand" id="brand">
+      <span class="logo" id="logo"></span>
+      <div>
+        <strong>The Growing Older Group</strong>
+        <span>Road crash hospitalisations in Australia, 2011 to 2021</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="tbtn" type="button" id="resetBtn" title="Clear every filter (R)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10a6 6 0 1 0 2-4.5M4 3v3.5h3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="lbl">Reset</span></button>
+      <button class="tbtn" type="button" id="shareBtn" title="Copy a link to this exact view">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 12l4-4M7 9.5 5 11.5a3 3 0 0 0 4.2 4.2l2-2M13 10.5l2-2A3 3 0 0 0 10.8 4.3l-2 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="lbl">Share</span></button>
+      <div class="pop-wrap">
+        <button class="tbtn" type="button" id="displayBtn" aria-expanded="false" aria-controls="settings" title="Theme and view size (T)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 2a8 8 0 0 1 0 16z" fill="currentColor"/></svg><span class="lbl">Display</span></button>
+        <div class="settings" id="settings" role="group" aria-label="Display settings" hidden>
+          <label for="themeSelect">Theme</label>
+          <select id="themeSelect"></select>
+          <label for="viewSelect">View size</label>
+          <select id="viewSelect"></select>
         </div>
       </div>
+      <button class="tbtn accent" type="button" id="howBtn" aria-haspopup="dialog" title="How to use (?)">
+        <span aria-hidden="true" class="q">?</span><span class="lbl">How to use</span></button>
+    </div>
+  </header>
+
+  <!-- ===== Slicers (filters) ===== -->
+  <section class="slicers" id="slicers" aria-label="Report filters">
+    <div class="slicer year-slicer">
+      <span class="sl-label" id="yearLabel">Year</span>
+      <div class="sl-row">
+        <button class="play" type="button" id="playBtn" aria-label="Play through the years" title="Play (P)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path class="i-play" d="M6 4l10 6-10 6z" fill="currentColor"/><path class="i-pause" d="M5 4h3.5v12H5zM11.5 4H15v12h-3.5z" fill="currentColor"/></svg></button>
+        <input type="range" id="year" min="2011" max="2021" step="1" value="2021" aria-labelledby="yearLabel">
+        <output id="yearOut" for="year">2021</output>
+      </div>
+    </div>
+    <div class="slicer" data-dim="measure">
+      <span class="sl-label" id="measureLabel">Measure</span>
+      <div class="seg" role="group" aria-labelledby="measureLabel" id="measureSeg">
+        <button type="button" data-v="hosp" aria-pressed="true">Admissions</button>
+        <button type="button" data-v="bed" aria-pressed="false">Bed days</button>
+      </div>
+    </div>
+    <div class="slicer" data-dim="sex">
+      <span class="sl-label" id="sexLabel">Sex</span>
+      <div class="seg" role="group" aria-labelledby="sexLabel" id="sexSeg">
+        <button type="button" data-v="All" aria-pressed="true">All</button>
+        <button type="button" data-v="Male" aria-pressed="false">Male</button>
+        <button type="button" data-v="Female" aria-pressed="false">Female</button>
+      </div>
+    </div>
+    <div class="slicer" data-dim="age">
+      <label class="sl-label" for="fAge">Age group</label>
+      <select id="fAge"></select>
+    </div>
+    <div class="slicer" data-dim="ru">
+      <label class="sl-label" for="fRu">Road user</label>
+      <select id="fRu"></select>
+    </div>
+    <div class="slicer" data-dim="area">
+      <label class="sl-label" for="fArea">Remoteness</label>
+      <select id="fArea"></select>
+    </div>
+    <p class="filter-note" id="filterNote" aria-live="polite"></p>
+  </section>
+
+  <!-- ===== Report canvas: seven pages, one visible at a time ===== -->
+  <main class="canvas" id="main" tabindex="-1">
+
+    <!-- Page 1: Overview -->
+    <section class="page p-overview" id="page-1" role="tabpanel" aria-labelledby="tab-1">
+      <div class="tile hero bg-night-highway">
+        <span class="kicker">01 Overview</span>
+        <h1>More older Australians are ending up in hospital after road crashes</h1>
+      </div>
+      <div class="kpi" id="k1-1"></div><div class="kpi" id="k1-2"></div><div class="kpi older" id="k1-3"></div><div class="kpi" id="k1-4"></div>
+      <article class="tile viz" id="v1-1" data-title="Admissions by year"></article>
+      <article class="tile viz" id="v1-2" data-title="By age group"></article>
+      <article class="tile viz" id="v1-3" data-title="By road user"></article>
+      <article class="tile viz" id="v1-4" data-title="By remoteness"></article>
     </section>
 
-    <!-- What the site answers -->
-    <section aria-labelledby="qTitle">
-      <div class="container grid grid-2" style="align-items:start">
-        <div class="reveal">
-          <p class="eyebrow">Why this story</p>
-          <h2 id="qTitle">Most crash stories are about young drivers. This one looks at the other end.</h2>
-          <p class="lead">Australia's population is getting older, and older people are travelling more by bike, motorbike and car. When they are hurt, recovery takes longer. This site follows that change through eleven years of national hospital data.</p>
-        </div>
-        <div class="card reveal">
-          <h3>Three questions we answer <span class="muted" style="font-weight:600;font-size:.85rem">(tap one to see the answer)</span></h3>
-          <div class="qa" id="qa">
-            <div class="qa-item">
-              <button type="button" class="qa-q" aria-expanded="false" aria-controls="qa1"><span class="qa-n">01</span><span>How have hospitalisations changed for each age group, and is the 65+ group growing faster than the others?</span><span class="qa-icon" aria-hidden="true">+</span></button>
-              <div class="qa-a" id="qa1" hidden>
-                <p class="qa-big"><strong data-qa="q1big">&hellip;</strong> growth for ages 65 to 74, the fastest of any group</p>
-                <p>Yes. Ages 65 to 74 grew the fastest and 75+ also grew strongly, while the 17 to 25 group stayed almost flat.</p>
-                <div class="qa-chart" data-qa="q1chart"></div>
-                <div class="qa-links"><a class="btn btn-primary" href="story.html#ch2">Read storyline 02</a><a class="btn" href="dashboard.html#tab-2">Explore 02</a></div>
-              </div>
-            </div>
-            <div class="qa-item">
-              <button type="button" class="qa-q" aria-expanded="false" aria-controls="qa2"><span class="qa-n">02</span><span>Is the older group becoming a bigger share of all hospitalisations?</span><span class="qa-icon" aria-hidden="true">+</span></button>
-              <div class="qa-a" id="qa2" hidden>
-                <p class="qa-big"><strong data-qa="q2big">&hellip;</strong> of all road crash hospitalisations were people aged 65+</p>
-                <p>Yes, from about 1 in 9 patients in 2011 to about 1 in 7 in 2021, with a peak in 2019.</p>
-                <div class="qa-chart" data-qa="q2chart"></div>
-                <div class="qa-links"><a class="btn btn-primary" href="story.html#ch1">Read storyline 01</a><a class="btn" href="dashboard.html#tab-1">Explore 01</a></div>
-              </div>
-            </div>
-            <div class="qa-item">
-              <button type="button" class="qa-q" aria-expanded="false" aria-controls="qa3"><span class="qa-n">03</span><span>Which road users and which sex explain the growth, and how long do older people stay in hospital?</span><span class="qa-icon" aria-hidden="true">+</span></button>
-              <div class="qa-a" id="qa3" hidden>
-                <p class="qa-big"><strong data-qa="q3big">&hellip;</strong> more older cyclists, mostly men, and stays about twice as long</p>
-                <p data-qa="q3text">&hellip;</p>
-                <div class="qa-chart" data-qa="q3chart"></div>
-                <div class="qa-links"><a class="btn btn-primary" href="story.html#ch3">Read storyline 03</a><a class="btn" href="story.html#ch4">Read storyline 04</a><a class="btn" href="dashboard.html#tab-3">Explore 03</a></div>
-              </div>
-            </div>
-            <div class="qa-item">
-              <button type="button" class="qa-q" aria-expanded="false" aria-controls="qa4"><span class="qa-n">+</span><span>Bonus: is it just because there are more older people?</span><span class="qa-icon" aria-hidden="true">+</span></button>
-              <div class="qa-a" id="qa4" hidden>
-                <p class="qa-big"><strong>Mostly, yes.</strong></p>
-                <p>Australians aged 65+ grew by about 42% from 2011 to 2021 (ABS) and their road crash hospitalisations by 41%. The rate per older person stayed at about 126 per 100,000. The load on hospitals still grew, especially because older patients stay longer.</p>
-                <div class="qa-links"><a class="btn btn-primary" href="story.html#check">See the reality check</a></div>
-              </div>
-            </div>
-          </div>
+    <!-- Page 2: Age and sex -->
+    <section class="page p-three" id="page-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+      <div class="tile hero bg-dawn-road">
+        <span class="kicker">02 Age and sex</span>
+        <h1>Ages 65 to 74 grew faster than any other age group</h1>
+      </div>
+      <div class="kpi older" id="k2-1"></div><div class="kpi older2" id="k2-2"></div><div class="kpi" id="k2-3"></div><div class="kpi" id="k2-4"></div>
+      <article class="tile viz" id="v2-1" data-title="Growth since 2011 (2011 = 100)"></article>
+      <article class="tile viz tall" id="v2-2" data-title="Men and women by age"></article>
+      <article class="tile viz" id="v2-3" data-title="Every age, every year"></article>
+    </section>
+
+    <!-- Page 3: Road users -->
+    <section class="page p-three" id="page-3" role="tabpanel" aria-labelledby="tab-3" hidden>
+      <div class="tile hero bg-street-grid">
+        <span class="kicker">03 Road users</span>
+        <h1>Drivers, riders and walkers: how older people get hurt</h1>
+      </div>
+      <div class="kpi" id="k3-1"></div><div class="kpi" id="k3-2"></div><div class="kpi" id="k3-3"></div><div class="kpi" id="k3-4"></div>
+      <article class="tile viz" id="v3-1" data-title="Road users over time"></article>
+      <article class="tile viz tall" id="v3-2" data-title="What they collided with"></article>
+      <article class="tile viz" id="v3-3" data-title="Road user mix: 65+ vs under 65"></article>
+    </section>
+
+    <!-- Page 4: Hospital stay -->
+    <section class="page p-three" id="page-4" role="tabpanel" aria-labelledby="tab-4" hidden>
+      <div class="tile hero bg-emergency-lights">
+        <span class="kicker">04 Hospital stay</span>
+        <h1>Older patients stay longer and fill more hospital beds</h1>
+      </div>
+      <div class="kpi" id="k4-1"></div><div class="kpi older" id="k4-2"></div><div class="kpi older" id="k4-3"></div><div class="kpi" id="k4-4"></div>
+      <article class="tile viz" id="v4-1" data-title="Average days in hospital by age"></article>
+      <article class="tile viz tall" id="v4-2" data-title="Average stay by road user"></article>
+      <article class="tile viz" id="v4-3" data-title="65+ share: admissions vs bed days"></article>
+    </section>
+
+    <!-- Page 5: States and territories -->
+    <section class="page p-three" id="page-5" role="tabpanel" aria-labelledby="tab-5" hidden>
+      <div class="tile hero bg-rainy-city">
+        <span class="kicker">05 States and territories</span>
+        <h1>The older share went up across the country</h1>
+      </div>
+      <div class="kpi" id="k5-1"></div><div class="kpi older" id="k5-2"></div><div class="kpi" id="k5-3"></div><div class="kpi" id="k5-4"></div>
+      <article class="tile viz" id="v5-1" data-title="Share aged 65+ by state"></article>
+      <article class="tile viz tall" id="v5-2" data-title="Share aged 65+, 2011 vs selected year"></article>
+      <article class="tile viz" id="v5-3" data-title="Selected state vs Australia"></article>
+    </section>
+
+    <!-- Page 6: First Nations -->
+    <section class="page p-three" id="page-6" role="tabpanel" aria-labelledby="tab-6" hidden>
+      <div class="tile hero bg-dawn-road">
+        <span class="kicker">06 First Nations people</span>
+        <h1>A younger and more remote picture for First Nations people</h1>
+      </div>
+      <div class="kpi older2" id="k6-1"></div><div class="kpi" id="k6-2"></div><div class="kpi older" id="k6-3"></div><div class="kpi" id="k6-4"></div>
+      <article class="tile viz" id="v6-1" data-title="Growth since 2011 (2011 = 100)"></article>
+      <article class="tile viz tall" id="v6-2" data-title="Age profile"></article>
+      <article class="tile viz" id="v6-3" data-title="Where they live"></article>
+    </section>
+
+    <!-- Page 7: About the data (like the Power BI glossary page) -->
+    <section class="page p-notes" id="page-7" role="tabpanel" aria-labelledby="tab-7" hidden>
+      <div class="tile hero bg-night-highway">
+        <span class="kicker">07 About the data</span>
+        <h1>Where the numbers come from</h1>
+      </div>
+      <div class="tile note with-art">
+        <img class="art" src="images/illustrations/hospital-bed.svg" alt="">
+        <h2>The data</h2>
+        <p>BITRE (2023) <em>Hospitalised Injury</em>, built from the AIHW National Hospital Morbidity Database. Traffic crashes only, 2011 to 2021. Cleaned in KNIME.</p>
+        <div class="dl-row">
+          <a class="dl" href="data/road_crash_hospitalisations.csv" download><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>National CSV</a>
+          <a class="dl" href="data/state_territory_hospitalisations.csv" download><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>States CSV</a>
+          <a class="dl" href="data/first_nations_hospitalisations.csv" download><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>First Nations CSV</a>
         </div>
       </div>
-    </section>
-
-    <!-- The path through the site -->
-    <section aria-labelledby="pathTitle" style="padding-top:0">
-      <div class="container">
-        <p class="eyebrow">Your path through the site</p>
-        <h2 id="pathTitle">Three steps, in this order</h2>
-        <ol class="journey" style="margin-top:18px">
-          <li><a href="story.html"><span class="step-n">1</span><span><strong>Read the story</strong><small>Six storylines, about 5 minutes. Scroll top to bottom.</small></span></a></li>
-          <li><a href="dashboard.html"><span class="step-n">2</span><span><strong>Explore the dashboard</strong><small>The same six storylines as tabs, with a year player and filters.</small></span></a></li>
-          <li><a href="data.html"><span class="step-n">3</span><span><strong>Check the data</strong><small>Where it comes from, how it was cleaned, and downloads.</small></span></a></li>
-        </ol>
+      <div class="tile note with-art">
+        <img class="art" src="images/illustrations/older-pedestrian.svg" alt="">
+        <h2>Key terms</h2>
+        <dl>
+          <dt>Admission</dt><dd>A person admitted to hospital after a road crash and discharged alive.</dd>
+          <dt>Bed days</dt><dd>Total days those people spent in hospital.</dd>
+          <dt>Older group</dt><dd>People aged 65 and over (65 to 74 and 75+).</dd>
+          <dt>n.p.</dt><dd>Not published: count too small to release. Shown striped, never as zero.</dd>
+        </dl>
       </div>
-    </section>
-
-    <!-- Storylines -->
-    <section aria-labelledby="chTitle" style="padding-top:0">
-      <div class="container">
-        <p class="eyebrow">Six storylines</p>
-        <h2 id="chTitle">Or jump straight to a topic</h2>
-        <p class="muted">Each number means the same thing everywhere: chapter 03 in the story is tab 03 on the dashboard.</p>
-        <div class="grid grid-3" style="margin-top:20px">
-          <article class="card story-card reveal">
-            <img src="images/illustrations/trend-calendar.svg" alt="" width="240" height="180">
-            <div class="inner">
-              <span class="num-badge">01</span>
-              <h3>National trend</h3>
-              <p class="muted">A decade of crashes, and the older share rising from 1 in 9 to 1 in 7.</p>
-              <div class="links"><a class="btn btn-primary" href="story.html#ch1">Read 01</a><a class="btn" href="dashboard.html#tab-1">Explore 01</a></div>
-            </div>
-          </article>
-          <article class="card story-card reveal">
-            <img src="images/illustrations/older-pedestrian.svg" alt="" width="240" height="180">
-            <div class="inner">
-              <span class="num-badge">02</span>
-              <h3>Age groups</h3>
-              <p class="muted">Every age group indexed to 2011: ages 65 to 74 grew fastest.</p>
-              <div class="links"><a class="btn btn-primary" href="story.html#ch2">Read 02</a><a class="btn" href="dashboard.html#tab-2">Explore 02</a></div>
-            </div>
-          </article>
-          <article class="card story-card reveal">
-            <img src="images/illustrations/older-cyclist.svg" alt="" width="240" height="180">
-            <div class="inner">
-              <span class="num-badge">03</span>
-              <h3>Road users</h3>
-              <p class="muted">Older cyclists tripled, motorcyclists more than doubled, mostly men.</p>
-              <div class="links"><a class="btn btn-primary" href="story.html#ch3">Read 03</a><a class="btn" href="dashboard.html#tab-3">Explore 03</a></div>
-            </div>
-          </article>
-          <article class="card story-card reveal">
-            <img src="images/illustrations/hospital-bed.svg" alt="" width="240" height="180">
-            <div class="inner">
-              <span class="num-badge">04</span>
-              <h3>Hospital stays</h3>
-              <p class="muted">Older patients stay about twice as long and use a quarter of bed days.</p>
-              <div class="links"><a class="btn btn-primary" href="story.html#ch4">Read 04</a><a class="btn" href="dashboard.html#tab-4">Explore 04</a></div>
-            </div>
-          </article>
-          <article class="card story-card reveal">
-            <img src="images/illustrations/states-map.svg" alt="" width="240" height="180">
-            <div class="inner">
-              <span class="num-badge">05</span>
-              <h3>States</h3>
-              <p class="muted">The older share rose in every state with reliable numbers.</p>
-              <div class="links"><a class="btn btn-primary" href="story.html#ch5">Read 05</a><a class="btn" href="dashboard.html#tab-5">Explore 05</a></div>
-            </div>
-          </article>
-          <article class="card story-card reveal">
-            <img src="images/illustrations/outback-road.svg" alt="" width="240" height="180">
-            <div class="inner">
-              <span class="num-badge">06</span>
-              <h3>First Nations</h3>
-              <p class="muted">A much younger story: only 2% of First Nations patients were 65+.</p>
-              <div class="links"><a class="btn btn-primary" href="story.html#ch6">Read 06</a><a class="btn" href="dashboard.html#tab-6">Explore 06</a></div>
-            </div>
-          </article>
-        </div>
+      <div class="tile note">
+        <h2>Reading the report</h2>
+        <ul class="legend-list" id="legendList"></ul>
+        <p class="small">Click a bar or point to filter the whole page. Click it again to clear. Counts are not rates: Australia also got older over these years.</p>
       </div>
-    </section>
-
-    <!-- People like you -->
-    <section aria-labelledby="finderTitle" style="padding-top:0">
-      <div class="container">
-        <div class="finder card">
-          <div>
-            <p class="eyebrow">Find people like you</p>
-            <h2 id="finderTitle" style="font-size:1.6rem">How many people like you ended up in hospital?</h2>
-            <p class="muted">Pick an age group, sex and how you get around. The numbers come straight from the national data.</p>
-            <form class="finder-form" onsubmit="return false" aria-label="People like you">
-              <div class="field"><label for="fiAge">Age group</label><select id="fiAge"></select></div>
-              <div class="field"><label for="fiSex">Sex</label><select id="fiSex"><option>Male</option><option>Female</option></select></div>
-              <div class="field"><label for="fiRu">Getting around as a</label><select id="fiRu"></select></div>
-            </form>
-          </div>
-          <div class="finder-out" aria-live="polite">
-            <div class="finder-big"><strong id="fiCount">&hellip;</strong><span id="fiCountLabel">hospitalised in 2021</span></div>
-            <div class="finder-facts">
-              <div><b id="fiChange">&hellip;</b><span>change since 2011</span></div>
-              <div><b id="fiStay">&hellip;</b><span>average days in hospital</span></div>
-              <div><b id="fiCp">&hellip;</b><span>most common thing they crashed with</span></div>
-            </div>
-            <div class="qa-chart" id="fiChart" aria-hidden="true"></div>
-            <p class="muted" id="fiNote" style="font-size:.85rem;margin:0"></p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- How to use -->
-    <section class="banner bg-dawn" aria-labelledby="howTitle">
-      <div class="container grid grid-2" style="align-items:start">
-        <div>
-          <p class="eyebrow">How to explore</p>
-          <h2 id="howTitle">Read it, then test it yourself</h2>
-          <p>Start with the story for the guided version. Then open the dashboard and filter by year, sex, remoteness and road user to check the pattern for yourself. Every chart has three buttons: <strong>Expand</strong> for a full-size view, <strong>Data</strong> to see the exact numbers, and <strong>CSV</strong> to download them.</p>
-          <a class="btn btn-primary" href="data.html">About the data</a>
-        </div>
-        <div class="glass">
-          <h3>Made for everyone</h3>
-          <ul style="margin:0;padding-left:20px">
-            <li><strong>Six themes:</strong> System, Dark, Light, High contrast, Colour-blind safe and Soft reading.</li>
-            <li><strong>View size:</strong> Auto fits your phone, laptop or big screen, or pick 75% to 150%.</li>
-            <li><strong>Keyboard:</strong> Tab between charts, then arrow keys or W A S D to move point to point.</li>
-            <li><strong>Play:</strong> watch the years change on the dashboard and in chapter 4.</li>
-          </ul>
-          <button class="btn btn-primary" type="button" style="margin-top:14px" onclick="App.guide.open()">? Open the full guide</button>
-        </div>
+      <div class="tile note">
+        <h2>Team, Group 11</h2>
+        <ul class="team">
+          <li><strong>Terence Loo Wen Xuan</strong><span>Report, D3 charts and design</span></li>
+          <li><strong>William Thomas Raymond</strong><span>KNIME workflow</span></li>
+          <li><strong>Yang Jing Lin</strong><span>Design Book and testing</span></li>
+        </ul>
+        <p class="small">COS30045 Data Visualisation. Built with D3.js v7. Generative AI (Claude) helped draft and debug code; numbers were checked against the source files.</p>
       </div>
     </section>
   </main>
 
-  <footer id="site-footer"></footer>
+  <!-- ===== Page tabs (bottom, like Power BI) ===== -->
+  <nav class="pagebar" aria-label="Report pages">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <span class="pageinfo" id="pageInfo"></span>
+  </nav>
+</div>
 
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="js/common.js"></script>
-  <script src="js/charts.js"></script>
-  <script src="js/home.js"></script>
+<script src="js/core.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/report.js"></script>
 </body>
 </html>
