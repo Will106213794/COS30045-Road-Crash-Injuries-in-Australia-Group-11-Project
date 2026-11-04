@@ -262,7 +262,7 @@ button, select, input { font: inherit; color: inherit; }
   height: calc(100dvh / var(--zoom, 1));
   width: calc(100vw / var(--zoom, 1));
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   grid-template-columns: minmax(0, 1fr);
   background:
     radial-gradient(1200px 500px at 85% -10%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 70%),
@@ -448,27 +448,27 @@ select {
 .team li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--border); padding-bottom: 5px; }
 .team strong { color: var(--text); font-size: 0.86rem; }
 
-/* Page tabs at the bottom, like Power BI */
+/* Page tabs: under the title bar, above the filters */
 .pagebar {
   display: flex; align-items: stretch; justify-content: space-between; gap: 10px;
-  background: var(--surface); border-top: 1px solid var(--border); padding: 0 10px;
+  background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 10px;
 }
 .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
   border: 0; background: transparent; cursor: pointer; white-space: nowrap;
-  padding: 9px 14px 8px; font-size: 0.82rem; font-weight: 700; color: var(--muted);
-  border-top: 3px solid transparent; display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 14px 9px; font-size: 0.82rem; font-weight: 700; color: var(--muted);
+  border-bottom: 3px solid transparent; display: inline-flex; align-items: center; gap: 7px;
 }
 .tab .n { font-size: 0.68rem; font-weight: 800; border: 1px solid var(--border); border-radius: 6px; padding: 0 5px; }
 .tab:hover { color: var(--text); background: var(--surface-2); }
-.tab[aria-selected="true"] { color: var(--text); border-top-color: var(--primary); background: var(--bg); }
+.tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--primary); background: var(--bg); }
 .tab[aria-selected="true"] .n { background: var(--primary); color: var(--primary-text); border-color: var(--primary); }
 .pageinfo { align-self: center; font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
 
 /* Tile data table inside the pop-up */
 .modal-body .chart { height: 68vh; min-height: 300px; }
-.toast { bottom: 56px; }
+.toast { bottom: 16px; }
 
 /* ---------- Smaller screens ----------
    Laptops and desktops get the one-screen report. Below 900px wide
@@ -485,14 +485,14 @@ select {
   .slicer { flex: 0 0 auto; }
   .topbar { padding: 8px 10px; }
   .brand strong { font-size: 0.92rem; }
-  .canvas { padding-bottom: 60px; overflow: visible; }
+  .canvas { overflow: visible; }
   .slicer select { min-width: 110px; }
   .page, .p-overview, .p-three, .p-notes { grid-template-columns: 1fr 1fr; grid-template-rows: none; height: auto; }
   .page .hero, .page .viz, .page .viz.tall, .p-notes .note { grid-column: 1 / -1 !important; grid-row: auto !important; }
   .page .kpi { grid-column: span 1 !important; min-height: 92px; }
   .page .viz { height: 340px; }
   .page .viz.tall { height: 400px; }
-  .pagebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; }
+  .pagebar { position: sticky; top: 0; z-index: 30; }
 }
 
 /* ---------- 4. Chart marks, tables, pop-up, tooltip ---------- */

@@ -7,7 +7,7 @@ A single-page, Power BI style report built with D3.js v7 about road crash hospit
 
 ## One page, seven report pages
 
-Everything is in `index.html`. The tabs at the bottom show one report page at a time (no separate HTML files, no page scrolling on a laptop or desktop).
+Everything is in `index.html`. The page tabs under the title bar show one report page at a time (no separate HTML files, no page scrolling on a laptop or desktop).
 
 | Tab | Page | Visuals |
 |---|---|---|
