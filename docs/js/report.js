@@ -1021,6 +1021,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const cube = d3.rollups(rows, (l) => ({ hosp: d3.sum(l, (d) => d.hosp), bed: d3.sum(l, (d) => d.bedDays) }),
       (d) => [d.year, d.age, d.sex, d.ruGroup, d.remoteness, d.counterparty].join("|"));
     R.cube = cube.map(([k, s]) => {
+// show what D3 loaded, like Lab 6
+      console.log("d3.csv loaded", rows.length, "rows. First 3:", rows.slice(0, 3));
+      console.log("Grouped with d3.rollups:", R.cube.length, "rows", R.cube.slice(0, 3));
       const [year, age, sex, ru, area, cp] = k.split("|");
       return { year: +year, age, sex, ru, area, cp, older: App.OLDER_AGES.includes(age), hosp: s.hosp, bed: s.bed };
     });
