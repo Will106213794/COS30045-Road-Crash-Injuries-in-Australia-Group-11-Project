@@ -209,18 +209,18 @@
         <h2>The data</h2>
         <p class="lead">BITRE (2023) <em>Hospitalised Injury</em>, traffic crashes only. Cleaned in KNIME.</p>
         <ul class="sets">
-          <li><span class="num">1</span><div><strong>National</strong><small>Age, sex, road user, remoteness, counterparty · 86,140 rows</small></div>
+          <li><span class="num">1</span><div><strong>National</strong><small>Age, sex, road user, remoteness, counterparty · 71,217 rows</small></div>
             <a class="dl" href="data/road_crash_hospitalisations.csv" download aria-label="Download the national CSV"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>CSV</a></li>
-          <li><span class="num">2</span><div><strong>States and territories</strong><small>Eight states by age group · 3,835 rows</small></div>
+          <li><span class="num">2</span><div><strong>States and territories</strong><small>Eight states by age group · 3,257 rows</small></div>
             <a class="dl" href="data/state_territory_hospitalisations.csv" download aria-label="Download the states CSV"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>CSV</a></li>
-          <li><span class="num">3</span><div><strong>First Nations</strong><small>First Nations and non-Indigenous people · 1,187 rows</small></div>
+          <li><span class="num">3</span><div><strong>First Nations</strong><small>First Nations and non-Indigenous people · 1,031 rows</small></div>
             <a class="dl" href="data/first_nations_hospitalisations.csv" download aria-label="Download the First Nations CSV"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>CSV</a></li>
         </ul>
         <div class="steps">
           <h3>How KNIME cleaned it</h3>
           <ol>
             <li>Read the raw table</li>
-            <li>Keep traffic crashes</li>
+            <li>Keep traffic, drop unknowns</li>
             <li>Drop unused columns</li>
             <li>Fix labels and n.p. values</li>
             <li>Write one clean CSV</li>
@@ -234,8 +234,8 @@
           <dt>Hospitalised injury</dt><dd>Admitted to hospital after a road crash and discharged alive.</dd>
           <dt>Bed days</dt><dd>Total days those people spent in hospital.</dd>
           <dt>Older group</dt><dd>People aged 65 and over.</dd>
-          <dt>n.p.</dt><dd>Not published: too small to release. Shown striped.</dd>
-          <dt>Left out</dt><dd>Records with no age, sex, road user or area (about 3%).</dd>
+          <dt>n.p.</dt><dd>Not published: too small to release. Shown striped or with *.</dd>
+          <dt>Left out</dt><dd>Records with an unknown age, sex, area or road user (about 6%), removed in KNIME.</dd>
         </dl>
       </div>
 

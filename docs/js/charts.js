@@ -377,8 +377,8 @@ Charts.hbar = (el, o) => {
 Charts.groupedHbar = (el, o) => {
   const redraw = () => Charts.groupedHbar(el, o);
   const small = el.clientWidth < 520;
-  const m = { top: 8, right: 60, bottom: 36, left: small ? 104 : 140 };
-  const height = o.fill ? undefined : Math.max(260, o.categories.length * o.groups.length * 22 + o.categories.length * 18 + 48);
+  const m = { top: 28, right: 60, bottom: 36, left: small ? 104 : 140 };
+  const height = o.fill ? undefined : Math.max(260, o.categories.length * o.groups.length * 22 + o.categories.length * 18 + 68);
   const f = Charts.frame(el, { ...o, height, reserve: o.sortable ? o.legendSpace || 44 : 0 }, m);
   const mode = Charts.sortSwitch(el, f, o, redraw);
   const cats = mode === "value" ? [...o.categories].sort((a, b) => o.value(b, o.groups[0].key) - o.value(a, o.groups[0].key)) : o.categories;
@@ -405,6 +405,7 @@ Charts.groupedHbar = (el, o) => {
     .attr("opacity", (d) => (o.selected == null || d.category === o.selected ? 1 : 0.35));
   Charts.tween(el, bars, (d) => "gb:" + d.category + ":" + d.group.key, ["y", "width"], () => ({ width: 0 }));
   App.tip.bind(bars, o.tip, { onSelect: o.onSelect });
+  Charts.legendRow(f.g, o.groups.map((g) => ({ label: g.label, colour: g.colour })), -12);
 
   const vl = f.g.append("g").selectAll("text").data(y1.bandwidth() >= 10 ? rows : []).join("text").attr("class", "value-label").style("font-size", "11px")
     .attr("x", (d) => x(d.value) + 4)

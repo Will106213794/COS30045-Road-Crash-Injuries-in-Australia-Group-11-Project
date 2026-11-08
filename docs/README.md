@@ -27,7 +27,10 @@ css/report.css      themes, layout, charts
 js/core.js          themes, view size, tooltip, keyboard, pop-up, data loading, CSV and PNG download
 js/charts.js        reusable D3 charts (line, area, column, grouped bar, donut, dumbbell, butterfly, heatmap, lollipop, treemap, tile map, 100% stacked bar)
 js/report.js        filters, cross-filtering, KPI cards and every visual
-data/               the three KNIME CSV outputs
+data/               the three KNIME CSV outputs (renamed)
+  road_crash_hospitalisations.csv       = hospitalisation_injury_publication(clean data).csv   71,217 rows
+  state_territory_hospitalisations.csv  = State and Territory Hospitalisation(clean data).csv   3,257 rows
+  first_nations_hospitalisations.csv    = First-Nations Hospitalisation2(clean data).csv        1,031 rows
 images/             title tile photos and illustrations
 ```
 
@@ -47,3 +50,9 @@ Use VS Code Live Server or GitHub Pages. Double-clicking `index.html` blocks the
 ## Credits
 
 Data: BITRE (2023) *Hospitalised Injury*. Charts: D3.js v7. Generative AI (Claude) helped draft and debug code; numbers were checked against the source files.
+
+## Data cleaning (KNIME)
+
+KNIME keeps traffic crashes only and removes rows with an unknown age, sex, remoteness area or road user
+(about 6% of records). Rows marked n.p. (not published) are also removed, so the website treats a missing
+state or First Nations row as n.p. and shows it striped or with *.

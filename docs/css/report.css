@@ -401,7 +401,8 @@ select {
 .tile header .t { min-width: 0; flex: 1; }
 .tile h2 { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* The small context line (year, filters, "click to filter") stays hidden
-   and only appears as a little label while the chart is hovered or focused. */
+   and only appears as a little label while the chart title is hovered, so it
+   never covers a legend while the user is reading the chart. */
 .tile header .t { position: relative; }
 .tile .ctx {
   position: absolute; left: 0; top: 100%; margin-top: 3px; z-index: 6; max-width: 100%;
@@ -409,7 +410,7 @@ select {
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 7px; padding: 1px 8px;
   opacity: 0; transform: translateY(-3px); pointer-events: none; transition: opacity 0.15s, transform 0.15s;
 }
-.tile:hover .ctx, .tile:focus-within .ctx { opacity: 1; transform: none; }
+.tile header:hover .ctx, .tile header:focus-within .ctx { opacity: 1; transform: none; }
 .tile .ctx b { color: var(--accent-text); font-weight: 800; }
 .tile-tools { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
 .tile:hover .tile-tools, .tile:focus-within .tile-tools { opacity: 1; }

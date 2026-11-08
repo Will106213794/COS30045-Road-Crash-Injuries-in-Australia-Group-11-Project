@@ -764,7 +764,10 @@ R.page5 = (rows) => {
     const l = age.filter((r) => (state === "AUS" || r.state === state) && r.year === year);
     const all = d3.sum(l, (r) => v(r) || 0);
     const older = d3.sum(l.filter((r) => App.OLDER_AGES.includes(r.category)), (r) => v(r) || 0);
-    return { state, year, older, all, share: all ? (older / all) * 100 : 0, flag: l.some((r) => v(r) === null) };
+    // KNIME removes suppressed (n.p.) rows, so a state-year with fewer than
+    // 7 age groups x 2 half-years = 14 rows includes n.p. values
+    const expected = (state === "AUS" ? App.STATES.length : 1) * App.AGE_ORDER.length * 2;
+    return { state, year, older, all, share: all ? (older / all) * 100 : 0, flag: l.length < expected || l.some((r) => v(r) === null) };
   };
   st.total = (state, year) => d3.sum(overall.filter((r) => r.state === state && r.year === year), (r) => v(r) || 0);
   // a fixed axis top across all years, so bars and dots move smoothly while playing
@@ -859,7 +862,7 @@ R.page6 = (rows) => {
   const shares = (list, cats, s, y) => {
     const l = list.filter((r) => r.status === s && r.year === y);
     const tot = d3.sum(l.filter((r) => cats.includes(r.category)), (r) => v(r) || 0);
-    return cats.map((c) => { const x = l.filter((r) => r.category === c); const n = d3.sum(x, (r) => v(r) || 0); return { c, n, share: tot ? (n / tot) * 100 : 0, flag: x.some((r) => v(r) === null) }; });
+    return cats.map((c) => { const x = l.filter((r) => r.category === c); const n = d3.sum(x, (r) => v(r) || 0); return { c, n, share: tot ? (n / tot) * 100 : 0, flag: x.length < 2 || x.some((r) => v(r) === null) }; }); // fewer than 2 half-years = n.p. rows removed
   };
   const pick = (list, cats, s, y, c) => shares(list, cats, s, y).find((d) => d.c === c);
 
@@ -1052,7 +1055,7 @@ document.addEventListener("DOMContentLoaded", () => {
   App.redrawers.add(() => { R.kpis.forEach((k) => { if (k.page === R.page) k.draw(); }); R.legend(); });
 
   App.data.load().then((rows) => {
-    // roll the 86,000 monthly rows up into a smaller "cube" so every filter change is instant
+    // roll the 71,000 monthly rows up into a smaller "cube" so every filter change is instant
     const cube = d3.rollups(rows, (l) => ({ hosp: d3.sum(l, (d) => d.hosp), bed: d3.sum(l, (d) => d.bedDays) }),
       (d) => [d.year, d.age, d.sex, d.ruGroup, d.remoteness, d.counterparty].join("|"));
     R.cube = cube.map(([k, s]) => {
