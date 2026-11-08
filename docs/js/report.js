@@ -620,7 +620,7 @@ R.page3 = () => {
     draw: (el, opt) => {
       const data = cps();
       const tot = d3.sum(data, (d) => d.value);
-      const pal = ["--c-car", "--c-older", "--c-cycle", "--c-ped", "--c-older-2"];
+      const pal = ["--c-car", "--c-moto", "--c-cycle", "--c-ped"]; // checked with the colour-blind simulator
       Charts.treemap(el, {
         ...opt, ariaLabel: "Treemap of what people collided with",
         data: data.map((d, i) => ({ ...d, colour: App.css(pal[i] || "--c-neutral") })),
@@ -1019,6 +1019,8 @@ R.setupHeader = () => {
   document.addEventListener("pointerdown", (e) => { if (!panel.hidden && !e.target.closest("#settings, #displayBtn")) setOpen(false); });
   panel.addEventListener("keydown", (e) => { if (e.key === "Escape") { setOpen(false); dBtn.focus(); } });
   document.getElementById("howBtn").addEventListener("click", () => App.guide.open());
+  // logo and title go back to the Overview page
+  document.getElementById("homeLink").addEventListener("click", (e) => { e.preventDefault(); R.go(1, true); });
   // the report description pop-up next to the title (hover, focus or click)
   const pop = document.querySelector(".about-pop");
   const info = document.getElementById("infoBtn");

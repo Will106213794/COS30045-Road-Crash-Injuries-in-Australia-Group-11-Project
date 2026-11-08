@@ -22,14 +22,27 @@
   <header class="topbar">
     <a class="skip-link" href="#main">Skip to report</a>
     <div class="brand" id="brand">
-      <span class="logo" id="logo"></span>
-      <h1 class="brand-title">The Growing Older Group</h1>
+      <!-- clicking the logo or title goes back to page 1 (Overview) -->
+      <a class="brand-link" href="#page-1" id="homeLink" title="Back to Overview">
+        <span class="logo" id="logo"></span>
+        <h1 class="brand-title">The Growing Older Group</h1>
+      </a>
       <!-- the description lives in a small pop-up (hover, focus or click the i button) -->
       <div class="about-pop">
         <button class="info-btn" type="button" id="infoBtn" aria-expanded="false" aria-controls="aboutPop" aria-label="About this report">i</button>
         <div class="about-card" id="aboutPop" role="tooltip">
           <strong>Road crash hospitalisations in Australia, 2011 to 2021</strong>
-          <p>An interactive report on people aged 65 and over who were admitted to hospital after a road crash. Data: BITRE (2023) Hospitalised Injury. COS30045 Group 11.</p>
+          <p>An interactive report on people aged 65 and over who were hospitalised after a road crash. Data: BITRE (2023).</p>
+          <table class="chart-list">
+            <tbody>
+              <tr><th>1 Overview</th><td>Area, column, donut, bar</td></tr>
+              <tr><th>2 Age and sex</th><td>Line, butterfly, heatmap</td></tr>
+              <tr><th>3 Road users</th><td>Line, treemap, grouped bar</td></tr>
+              <tr><th>4 Hospital stay</th><td>Lollipop, dumbbell, line</td></tr>
+              <tr><th>5 States</th><td>Tile map, dumbbell, line</td></tr>
+              <tr><th>6 First Nations</th><td>Line, butterfly, 100% stacked bar</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -178,44 +191,67 @@
 
     <!-- Page 7: About the data (like the Power BI glossary page) -->
     <section class="page p-notes" id="page-7" role="tabpanel" aria-labelledby="tab-7" hidden>
-      <div class="tile hero bg-night-highway">
-        <span class="kicker">07 About the data</span>
-        <h1>Where the numbers come from</h1>
+      <div class="tile hero bg-night-highway notes-hero">
+        <div>
+          <span class="kicker">07 About the data</span>
+          <h1>Where the numbers come from</h1>
+        </div>
+        <ul class="hero-stats">
+          <li><b>3</b><span>datasets</span></li>
+          <li><b>11</b><span>years</span></li>
+          <li><b>6</b><span>report pages</span></li>
+          <li><b>19</b><span>D3 charts</span></li>
+        </ul>
       </div>
-      <div class="tile note with-art">
-        <img class="art" src="images/illustrations/hospital-bed.svg" alt="">
+
+      <!-- the three cleaned files, one card each -->
+      <div class="tile note n-data">
         <h2>The data</h2>
-        <p>BITRE (2023) <em>Hospitalised Injury</em>, built from the AIHW National Hospital Morbidity Database. Traffic crashes only, 2011 to 2021. Cleaned in KNIME.</p>
-        <div class="dl-row">
-          <a class="dl" href="data/road_crash_hospitalisations.csv" download><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>National CSV</a>
-          <a class="dl" href="data/state_territory_hospitalisations.csv" download><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>States CSV</a>
-          <a class="dl" href="data/first_nations_hospitalisations.csv" download><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>First Nations CSV</a>
+        <p class="lead">BITRE (2023) <em>Hospitalised Injury</em>, traffic crashes only. Cleaned in KNIME.</p>
+        <ul class="sets">
+          <li><span class="num">1</span><div><strong>National</strong><small>Age, sex, road user, remoteness, counterparty · 86,140 rows</small></div>
+            <a class="dl" href="data/road_crash_hospitalisations.csv" download aria-label="Download the national CSV"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>CSV</a></li>
+          <li><span class="num">2</span><div><strong>States and territories</strong><small>Eight states by age group · 3,835 rows</small></div>
+            <a class="dl" href="data/state_territory_hospitalisations.csv" download aria-label="Download the states CSV"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>CSV</a></li>
+          <li><span class="num">3</span><div><strong>First Nations</strong><small>First Nations and non-Indigenous people · 1,187 rows</small></div>
+            <a class="dl" href="data/first_nations_hospitalisations.csv" download aria-label="Download the First Nations CSV"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>CSV</a></li>
+        </ul>
+        <div class="steps">
+          <h3>How KNIME cleaned it</h3>
+          <ol>
+            <li>Read the raw table</li>
+            <li>Keep traffic crashes</li>
+            <li>Drop unused columns</li>
+            <li>Fix labels and n.p. values</li>
+            <li>Write one clean CSV</li>
+          </ol>
         </div>
       </div>
-      <div class="tile note with-art">
-        <img class="art" src="images/illustrations/older-pedestrian.svg" alt="">
+
+      <div class="tile note n-terms">
         <h2>Key terms</h2>
         <dl>
-          <dt>Admission</dt><dd>A person admitted to hospital after a road crash and discharged alive.</dd>
+          <dt>Hospitalised injury</dt><dd>Admitted to hospital after a road crash and discharged alive.</dd>
           <dt>Bed days</dt><dd>Total days those people spent in hospital.</dd>
-          <dt>Older group</dt><dd>People aged 65 and over (65 to 74 and 75+).</dd>
-          <dt>n.p.</dt><dd>Not published: count too small to release. Shown striped, never as zero.</dd>
-          <dt>Left out</dt><dd>Records with no age, sex, road user or area (about 3%). Crashes with no recorded counterparty are left out of that one chart.</dd>
+          <dt>Older group</dt><dd>People aged 65 and over.</dd>
+          <dt>n.p.</dt><dd>Not published: too small to release. Shown striped.</dd>
+          <dt>Left out</dt><dd>Records with no age, sex, road user or area (about 3%).</dd>
         </dl>
       </div>
-      <div class="tile note">
-        <h2>Reading the report</h2>
+
+      <div class="tile note n-key">
+        <h2>Colour key</h2>
         <ul class="legend-list" id="legendList"></ul>
-        <p class="small">Click a bar, slice or point to filter the page; click again to clear. Counts are not rates.</p>
       </div>
-      <div class="tile note">
+
+      <div class="tile note n-team">
         <h2>Team, Group 11</h2>
         <ul class="team">
-          <li><strong>Terence Loo Wen Xuan</strong><span>Report, D3 charts and design</span></li>
-          <li><strong>William Thomas Raymond</strong><span>KNIME workflow</span></li>
-          <li><strong>Yang Jing Lin</strong><span>Design Book and testing</span></li>
+          <li><span class="avatar">TL</span><div><strong>Terence Loo Wen Xuan</strong><span class="roles"><i>Design</i><i>D3 charts</i><i>Testing</i></span></div></li>
+          <li><span class="avatar">WR</span><div><strong>William Thomas Raymond</strong><span class="roles"><i>KNIME workflow</i></span></div></li>
+          <li><span class="avatar">YL</span><div><strong>Yang Jing Lin</strong><span class="roles"><i>Report</i><i>Testing</i></span></div></li>
         </ul>
-        <p class="small">COS30045 Data Visualisation. Built with D3.js v7. Generative AI (Claude) helped draft and debug code; numbers were checked against the source files.</p>
+        <img class="team-art" src="images/illustrations/older-pedestrian.svg" alt="">
       </div>
     </section>
   </main>
