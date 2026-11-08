@@ -23,9 +23,14 @@
     <a class="skip-link" href="#main">Skip to report</a>
     <div class="brand" id="brand">
       <span class="logo" id="logo"></span>
-      <div>
-        <strong>The Growing Older Group</strong>
-        <span>Road crash hospitalisations in Australia, 2011 to 2021</span>
+      <h1 class="brand-title">The Growing Older Group</h1>
+      <!-- the description lives in a small pop-up (hover, focus or click the i button) -->
+      <div class="about-pop">
+        <button class="info-btn" type="button" id="infoBtn" aria-expanded="false" aria-controls="aboutPop" aria-label="About this report">i</button>
+        <div class="about-card" id="aboutPop" role="tooltip">
+          <strong>Road crash hospitalisations in Australia, 2011 to 2021</strong>
+          <p>An interactive report on people aged 65 and over who were admitted to hospital after a road crash. Data: BITRE (2023) Hospitalised Injury. COS30045 Group 11.</p>
+        </div>
       </div>
     </div>
     <div class="top-actions">
@@ -68,7 +73,7 @@
     <div class="slicer" data-dim="measure">
       <span class="sl-label" id="measureLabel">Measure</span>
       <div class="seg" role="group" aria-labelledby="measureLabel" id="measureSeg">
-        <button type="button" data-v="hosp" aria-pressed="true">Admissions</button>
+        <button type="button" data-v="hosp" aria-pressed="true">Injuries</button>
         <button type="button" data-v="bed" aria-pressed="false">Bed days</button>
       </div>
     </div>
@@ -115,7 +120,7 @@
     <section class="page p-three" id="page-2" role="tabpanel" aria-labelledby="tab-2" hidden>
       <div class="tile hero bg-dawn-road">
         <span class="kicker">02 Age and sex</span>
-        <h1>Ages 65 to 74 grew faster than any other age group</h1>
+        <h1>Ages 65 to 74 grew the fastest of all age groups</h1>
       </div>
       <div class="kpi older" id="k2-1"></div><div class="kpi older2" id="k2-2"></div><div class="kpi" id="k2-3"></div><div class="kpi" id="k2-4"></div>
       <article class="tile viz" id="v2-1" data-title="Growth since 2011 (2011 = 100)"></article>
@@ -148,14 +153,14 @@
     </section>
 
     <!-- Page 5: States and territories -->
-    <section class="page p-three" id="page-5" role="tabpanel" aria-labelledby="tab-5" hidden>
+    <section class="page p-cols" id="page-5" role="tabpanel" aria-labelledby="tab-5" hidden>
       <div class="tile hero bg-rainy-city">
         <span class="kicker">05 States and territories</span>
         <h1>The older share went up across the country</h1>
       </div>
       <div class="kpi" id="k5-1"></div><div class="kpi older" id="k5-2"></div><div class="kpi" id="k5-3"></div><div class="kpi" id="k5-4"></div>
       <article class="tile viz" id="v5-1" data-title="Share aged 65+ by state"></article>
-      <article class="tile viz tall" id="v5-2" data-title="Share aged 65+, 2011 vs selected year"></article>
+      <article class="tile viz" id="v5-2" data-title="Share aged 65+, 2011 vs selected year"></article>
       <article class="tile viz" id="v5-3" data-title="Selected state vs Australia"></article>
     </section>
 
@@ -195,12 +200,13 @@
           <dt>Bed days</dt><dd>Total days those people spent in hospital.</dd>
           <dt>Older group</dt><dd>People aged 65 and over (65 to 74 and 75+).</dd>
           <dt>n.p.</dt><dd>Not published: count too small to release. Shown striped, never as zero.</dd>
+          <dt>Left out</dt><dd>Records with no age, sex, road user or area (about 3%). Crashes with no recorded counterparty are left out of that one chart.</dd>
         </dl>
       </div>
       <div class="tile note">
         <h2>Reading the report</h2>
         <ul class="legend-list" id="legendList"></ul>
-        <p class="small">Click a bar or point to filter the whole page. Click it again to clear. Counts are not rates: Australia also got older over these years.</p>
+        <p class="small">Click a bar, slice or point to filter the page; click again to clear. Counts are not rates.</p>
       </div>
       <div class="tile note">
         <h2>Team, Group 11</h2>

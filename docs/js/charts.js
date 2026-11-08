@@ -419,7 +419,8 @@ Charts.groupedHbar = (el, o) => {
    --------------------------------------------------------- */
 Charts.dumbbell = (el, o) => {
   const small = el.clientWidth < 520;
-  const m = { top: 30, right: 56, bottom: 36, left: small ? 64 : 84 };
+  const longest = d3.max(o.rows, (d) => String(d.label).length + (d.flag ? 2 : 0)) || 6;
+  const m = { top: 30, right: 64, bottom: 36, left: Math.max(small ? 64 : 84, longest * 6.8 + 14) };
   const height = o.fill ? undefined : Math.max(240, o.rows.length * 44 + 70);
   const f = Charts.frame(el, { ...o, height }, m);
   const fmt = o.format || d3.format(".1f");
@@ -438,9 +439,10 @@ Charts.dumbbell = (el, o) => {
 
   const leg = f.g.append("g").attr("transform", "translate(0,-18)");
   leg.append("circle").attr("cx", 6).attr("cy", 0).attr("r", 6).attr("fill", "none").attr("stroke", aCol).attr("stroke-width", 2.5);
-  leg.append("text").attr("x", 16).attr("y", 4).attr("class", "axis-title").text(o.aLabel);
-  leg.append("circle").attr("cx", 76).attr("cy", 0).attr("r", 6).attr("fill", bCol);
-  leg.append("text").attr("x", 86).attr("y", 4).attr("class", "axis-title").text(o.bLabel);
+  const aText = leg.append("text").attr("x", 16).attr("y", 4).attr("class", "axis-title").text(o.aLabel);
+  const bx = 16 + (aText.node().getComputedTextLength ? aText.node().getComputedTextLength() : 60) + 22;
+  leg.append("circle").attr("cx", bx).attr("cy", 0).attr("r", 6).attr("fill", bCol);
+  leg.append("text").attr("x", bx + 10).attr("y", 4).attr("class", "axis-title").text(o.bLabel);
 
   const rowG = f.g.append("g").selectAll("g").data(o.rows).join("g").attr("class", "series")
     .attr("transform", (d) => `translate(0,${y(d.label) + y.bandwidth() / 2})`);
@@ -452,54 +454,10 @@ Charts.dumbbell = (el, o) => {
   Charts.tween(el, b, (d) => "b:" + d.label, ["cx"], function (d) { return { cx: x(d.a) }; });
   App.tip.bind(a, (d) => o.tip(d, "a"), { onSelect: o.onSelect });
   App.tip.bind(b, (d) => o.tip(d, "b"), { onSelect: o.onSelect });
-  const vl = rowG.append("text").attr("class", "value-label").attr("x", (d) => x(Math.max(d.a, d.b)) + 12).attr("dy", "0.35em").text((d) => fmt(d.b));
+  // the label belongs to the filled dot, so it sits on the side of that dot away from the ring
+  const vl = rowG.append("text").attr("class", "value-label").attr("x", (d) => x(d.b) + (d.b >= d.a ? 12 : -12))
+    .attr("text-anchor", (d) => (d.b >= d.a ? "start" : "end")).attr("dy", "0.35em").text((d) => fmt(d.b));
   Charts.tween(el, vl, (d) => "dv:" + d.label, ["x"]);
-};
-
-/* ---------------------------------------------------------
-   Heatmap (rows x columns), one hue from light to strong
-   o.rows, o.cols, o.value(row, col), o.tip(cell), o.flag(row, col), o.focusCol
-   --------------------------------------------------------- */
-Charts.heatmap = (el, o) => {
-  const small = el.clientWidth < 520;
-  const m = { top: 8, right: 12, bottom: 36, left: small ? 52 : 64 };
-  const f = Charts.frame(el, { ...o, height: o.fill ? undefined : Math.max(260, o.rows.length * 40 + 50) }, m);
-  const cells = o.rows.flatMap((r) => o.cols.map((c) => ({ row: r, col: c, value: o.value(r, c) })));
-  const x = d3.scaleBand().domain(o.cols).range([0, f.w]).padding(0.06);
-  const y = d3.scaleBand().domain(o.rows).range([0, f.h]).padding(0.08);
-  const colour = d3.scaleLinear().domain([0, d3.max(cells, (d) => d.value) || 1])
-    .range([App.css("--heat-low"), App.css("--heat-high")]).interpolate(d3.interpolateRgb);
-
-  f.g.append("g").attr("class", "axis").attr("transform", `translate(0,${f.h})`)
-    .call(d3.axisBottom(x).tickSize(0).tickValues(small ? o.cols.filter((d, i) => i % 2 === 0) : o.cols))
-    .select(".domain").remove();
-  f.g.append("g").attr("class", "axis").call(d3.axisLeft(y).tickSize(0)).select(".domain").remove();
-
-  const rect = f.g.append("g").selectAll("rect").data(cells).join("rect")
-    .attr("x", (d) => x(d.col)).attr("y", (d) => y(d.row))
-    .attr("width", x.bandwidth()).attr("height", y.bandwidth())
-    .attr("rx", 4).attr("fill", (d) => colour(d.value));
-  Charts.tween(el, rect, (d) => "c:" + d.row + ":" + d.col, ["fill"]);
-  App.tip.bind(rect, o.tip, { onSelect: o.onSelect });
-  if (o.flag) {
-    const hatch = Charts.hatch(f.svg);
-    f.g.append("g").selectAll("rect").data(cells.filter((d) => o.flag(d.row, d.col))).join("rect")
-      .attr("x", (d) => x(d.col)).attr("y", (d) => y(d.row)).attr("width", x.bandwidth()).attr("height", y.bandwidth())
-      .attr("rx", 4).attr("fill", hatch).style("pointer-events", "none");
-  }
-  if (o.focusCol !== undefined && x(o.focusCol) !== undefined) {
-    const fr = f.g.append("rect").attr("x", x(o.focusCol) - 3).attr("y", -3).attr("width", x.bandwidth() + 6).attr("height", f.h + 6)
-      .attr("rx", 8).attr("fill", "none").attr("stroke", "var(--text)").attr("stroke-width", 2).style("pointer-events", "none");
-    Charts.tween(el, fr, () => "__focusCol", ["x"]);
-  }
-  if (x.bandwidth() > 44) {
-    const fmt = o.cellFormat || d3.format(".2s");
-    f.g.append("g").selectAll("text").data(cells).join("text")
-      .attr("x", (d) => x(d.col) + x.bandwidth() / 2).attr("y", (d) => y(d.row) + y.bandwidth() / 2).attr("dy", "0.35em")
-      .attr("text-anchor", "middle").style("font-size", "11px").style("font-weight", 700).style("pointer-events", "none")
-      .attr("fill", (d) => Charts.textOn(colour(d.value)))
-      .text((d) => fmt(d.value));
-  }
 };
 
 /* ---------------------------------------------------------
@@ -561,59 +519,285 @@ Charts.butterfly = (el, o) => {
   Charts.tween(el, vl, (d) => "bv:" + d.side.key + ":" + d.category, ["x"]);
 };
 
+/* =========================================================
+   Chart types added after tutor feedback (fewer bar charts):
+   stacked area, donut, heatmap, lollipop, treemap, tile map, 100% stacked bars
+   ========================================================= */
+
+/* Small legend row drawn inside the SVG's top margin. items: [{label, colour, ring}] */
+Charts.legendRow = (g, items, y = -16) => {
+  const leg = g.append("g").attr("transform", `translate(0,${y})`);
+  let lx = 0;
+  items.forEach((it) => {
+    if (it.ring) leg.append("circle").attr("cx", lx + 6).attr("cy", -3).attr("r", 5.5).attr("fill", "none").attr("stroke", it.colour).attr("stroke-width", 2.5);
+    else leg.append("rect").attr("x", lx).attr("y", -9).attr("width", 12).attr("height", 12).attr("rx", 3).attr("fill", it.colour);
+    const t = leg.append("text").attr("x", lx + 17).attr("y", 1).attr("class", "axis-title").text(it.label);
+    lx += 17 + (t.node().getComputedTextLength ? t.node().getComputedTextLength() : 60) + 16;
+  });
+};
+
 /* ---------------------------------------------------------
-   Stacked columns (e.g. each year split into Under 65 and 65+)
-   o.cats: x categories, o.parts: [{key, label, colour}] bottom to top,
-   o.value(cat, key), o.focusX (highlighted column), o.onSelect(cat), o.tip(d)
+   Stacked area chart over the years
+   o.cats (years), o.parts [{key, label, colour}] bottom to top,
+   o.value(cat, key), o.focusX, o.onSelect(cat), o.tip(d)
    --------------------------------------------------------- */
-Charts.stack = (el, o) => {
+Charts.area = (el, o) => {
   const small = el.clientWidth < 520;
-  const m = { top: 30, right: 12, bottom: 30, left: small ? 46 : 58 };
+  const m = { top: 30, right: 16, bottom: 30, left: small ? 46 : 58 };
   const f = Charts.frame(el, o, m);
   f.marginLeft = m.left;
-  const rows = o.cats.flatMap((c) => {
-    let y0 = 0;
-    return o.parts.map((p) => {
-      const v = o.value(c, p.key) || 0;
-      const r = { cat: c, part: p, value: v, y0, y1: y0 + v };
-      y0 += v;
-      return r;
-    });
-  });
-  const totals = new Map(o.cats.map((c) => [c, d3.sum(rows.filter((r) => r.cat === c), (r) => r.value)]));
-  const x = d3.scaleBand().domain(o.cats).range([0, f.w]).padding(0.2);
-  const y = d3.scaleLinear().domain([0, (d3.max(totals.values()) || 1) * 1.12]).nice().range([f.h, 0]);
-  const yFormat = o.yFormat || d3.format("~s");
+  const rows = o.cats.map((c) => { const r = { cat: c }; o.parts.forEach((p) => { r[p.key] = o.value(c, p.key) || 0; }); return r; });
+  const series = d3.stack().keys(o.parts.map((p) => p.key))(rows);
+  const x = d3.scalePoint().domain(o.cats).range([0, f.w]).padding(0.02);
+  const y = d3.scaleLinear().domain([0, (d3.max(series[series.length - 1], (d) => d[1]) || 1) * 1.1]).nice().range([f.h, 0]);
 
   f.g.append("g").attr("class", "grid-lines").call(d3.axisLeft(y).ticks(4).tickSize(-f.w).tickFormat(""));
   f.g.append("g").attr("class", "axis").attr("transform", `translate(0,${f.h})`)
     .call(d3.axisBottom(x).tickValues(small ? o.cats.filter((d, i) => i % 2 === 0) : o.cats).tickFormat((d) => (small ? "'" + String(d).slice(2) : d)));
-  f.g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(4).tickFormat(yFormat));
-  Charts.yTitle(f.g, f, o.yLabel);
+  f.g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(4).tickFormat(o.yFormat || d3.format("~s")));
+  Charts.legendRow(f.g, [...o.parts].reverse());
 
-  // small legend in the top margin
-  const leg = f.g.append("g").attr("transform", "translate(0,-16)");
-  let lx = 0;
-  [...o.parts].reverse().forEach((p) => {
-    leg.append("rect").attr("x", lx).attr("y", -9).attr("width", 12).attr("height", 12).attr("rx", 3).attr("fill", p.colour);
-    const t = leg.append("text").attr("x", lx + 17).attr("y", 1).attr("class", "axis-title").text(p.label);
-    lx += 17 + (t.node().getComputedTextLength ? t.node().getComputedTextLength() : 60) + 16;
+  const area = d3.area().x((d) => x(d.data.cat)).y0((d) => y(d[0])).y1((d) => y(d[1])).curve(d3.curveMonotoneX);
+  const flat = d3.area().x((d) => x(d.data.cat)).y0(f.h).y1(f.h).curve(d3.curveMonotoneX);
+  const paths = f.g.append("g").selectAll("path").data(series).join("path")
+    .attr("class", "series").attr("d", area)
+    .attr("fill", (d, i) => o.parts[i].colour).attr("fill-opacity", 0.85)
+    .attr("stroke", "var(--surface)").attr("stroke-width", 1.5);
+  Charts.tween(el, paths, (d) => "ar:" + d.key, ["d"], (d) => ({ d: flat(d) }));
+
+  // the selected year: a guide line plus the total
+  if (o.focusX !== undefined) {
+    const tot = series[series.length - 1].find((d) => d.data.cat === o.focusX);
+    const fl = f.g.append("line").attr("class", "focus-line").attr("x1", x(o.focusX)).attr("x2", x(o.focusX)).attr("y1", 0).attr("y2", f.h);
+    Charts.tween(el, fl, () => "afl", ["x1", "x2"]);
+    if (tot) {
+      const lab = f.g.append("text").attr("class", "value-label").attr("x", x(o.focusX)).attr("y", y(tot[1]) - 10)
+        .attr("text-anchor", o.focusX === o.cats[o.cats.length - 1] ? "end" : "middle").text((o.valueFormat || d3.format(","))(tot[1]));
+      Charts.tween(el, lab, () => "afv", ["x", "y"]);
+    }
+  }
+  // one dot per year and layer carries the tooltip and the click
+  const pts = series.flatMap((s, i) => s.map((d) => ({ cat: d.data.cat, part: o.parts[i], value: d[1] - d[0], y1: d[1] })));
+  const dots = f.g.append("g").selectAll("circle").data(pts).join("circle")
+    .attr("cx", (d) => x(d.cat)).attr("cy", (d) => y(d.y1)).attr("r", (d) => (d.cat === o.focusX ? 5.5 : 3.5))
+    .attr("fill", (d) => d.part.colour).attr("stroke", "var(--surface)").attr("stroke-width", 1.5);
+  Charts.tween(el, dots, (d) => "ad:" + d.cat + d.part.key, ["cy", "r"], () => ({ cy: f.h }));
+  App.tip.bind(dots, o.tip, { onSelect: o.onSelect ? (d) => o.onSelect(d.cat) : null });
+};
+
+/* ---------------------------------------------------------
+   Donut chart with a legend beside it
+   o.data [{label, value, colour}], o.selected, o.centre {title, value},
+   o.onSelect(d), o.tip(d), o.format(v)
+   --------------------------------------------------------- */
+Charts.donut = (el, o) => {
+  const f = Charts.frame(el, o, { top: 8, right: 8, bottom: 8, left: 8 });
+  const legendW = Math.min(230, f.w * 0.48);
+  const R = Math.max(40, Math.min((f.w - legendW) / 2 - 8, f.h / 2 - 4));
+  const cx = R + 6, cy = f.h / 2;
+  const total = d3.sum(o.data, (d) => d.value) || 1;
+  const pie = d3.pie().value((d) => d.value).sort(null).padAngle(0.012);
+  const arcs = pie(o.data);
+  const arc = d3.arc().innerRadius(R * 0.6).outerRadius((d) => (d.data.label === o.selected ? R : R * 0.94)).cornerRadius(3);
+  const g = f.g.append("g").attr("transform", `translate(${cx},${cy})`);
+  const paths = g.selectAll("path").data(arcs).join("path")
+    .attr("fill", (d) => d.data.colour).attr("stroke", "var(--surface)").attr("stroke-width", 1.5)
+    .attr("opacity", (d) => (o.selected == null || d.data.label === o.selected ? 1 : 0.35));
+  // arcs sweep from their old angles to the new ones
+  const motion = Charts.motion();
+  paths.each(function (d) {
+    const k = "dn:" + d.data.label;
+    const old = el.__prev.get(k) || { startAngle: 0, endAngle: 0 };
+    el.__next.set(k, { startAngle: d.startAngle, endAngle: d.endAngle });
+    if (!motion) { d3.select(this).attr("d", arc(d)); return; }
+    const i = d3.interpolate({ startAngle: old.startAngle, endAngle: old.endAngle }, { startAngle: d.startAngle, endAngle: d.endAngle });
+    d3.select(this).attr("d", arc({ ...d, ...i(0) })).transition().duration(Charts.DUR).ease(d3.easeCubicOut)
+      .attrTween("d", () => (t) => arc({ ...d, ...i(t) }));
   });
+  App.tip.bind(paths, (d) => o.tip(d.data), { onSelect: o.onSelect ? (d) => o.onSelect(d.data) : null });
+  if (o.centre) {
+    // the hole shows the selected (or largest) slice, sized to fit inside the ring
+    g.append("text").attr("text-anchor", "middle").attr("y", R > 56 ? -2 : 6).attr("class", "donut-big").style("font-size", Math.round(R * 0.3) + "px").text(o.centre.value);
+    if (R > 56) g.append("text").attr("text-anchor", "middle").attr("y", R * 0.22).attr("class", "axis-title").style("font-size", Math.max(10, Math.round(R * 0.13)) + "px").text(o.centre.title);
+  }
+  // legend: swatch, name, share
+  const lx = cx + R + 22;
+  const rowH = Math.min(30, (f.h - 10) / o.data.length);
+  const lg = f.g.append("g").attr("transform", `translate(${lx},${cy - (rowH * o.data.length) / 2 + rowH / 2})`);
+  o.data.forEach((d, i) => {
+    const r = lg.append("g").attr("transform", `translate(0,${i * rowH})`).attr("opacity", o.selected == null || d.label === o.selected ? 1 : 0.45);
+    r.append("rect").attr("x", 0).attr("y", -6).attr("width", 12).attr("height", 12).attr("rx", 3).attr("fill", d.colour);
+    r.append("text").attr("x", 18).attr("y", 4).attr("class", "legend-name").text(d.label);
+    r.append("text").attr("x", f.w - lx).attr("y", 4).attr("text-anchor", "end").attr("class", "value-label")
+      .text(d3.format(".0f")((d.value / total) * 100) + "%");
+  });
+};
 
-  const bars = f.g.append("g").selectAll("rect").data(rows).join("rect")
-    .attr("x", (d) => x(d.cat))
-    .attr("width", x.bandwidth())
-    .attr("y", (d) => y(d.y1))
-    .attr("height", (d) => Math.max(0, y(d.y0) - y(d.y1)))
-    .attr("fill", (d) => d.part.colour)
-    .attr("opacity", (d) => (o.focusX === undefined || d.cat === o.focusX ? 1 : 0.5));
-  Charts.tween(el, bars, (d) => "st:" + d.cat + ":" + d.part.key, ["y", "height", "x", "width"], () => ({ y: f.h, height: 0 }));
-  App.tip.bind(bars, o.tip, { onSelect: o.onSelect ? (d) => o.onSelect(d.cat) : null });
+/* ---------------------------------------------------------
+   Heatmap (rows x columns), one hue from light to strong
+   o.rows, o.cols, o.value(row, col), o.tip(cell), o.flag(row, col), o.focusCol
+   --------------------------------------------------------- */
+Charts.heatmap = (el, o) => {
+  const small = el.clientWidth < 520;
+  const m = { top: 8, right: 12, bottom: 36, left: small ? 52 : 64 };
+  const f = Charts.frame(el, { ...o, height: o.fill ? undefined : Math.max(260, o.rows.length * 40 + 50) }, m);
+  const cells = o.rows.flatMap((r) => o.cols.map((c) => ({ row: r, col: c, value: o.value(r, c) })));
+  const x = d3.scaleBand().domain(o.cols).range([0, f.w]).padding(0.06);
+  const y = d3.scaleBand().domain(o.rows).range([0, f.h]).padding(0.08);
+  const colour = d3.scaleLinear().domain([0, d3.max(cells, (d) => d.value) || 1])
+    .range([App.css("--heat-low"), App.css("--heat-high")]).interpolate(d3.interpolateRgb);
 
-  // total above the highlighted column
-  const lab = o.cats.filter((c) => c === o.focusX).map((c) => ({ c, v: totals.get(c) }));
-  const vl = f.g.append("g").selectAll("text").data(lab).join("text").attr("class", "value-label")
-    .attr("x", (d) => x(d.c) + x.bandwidth() / 2).attr("y", (d) => y(d.v) - 6).attr("text-anchor", "middle")
-    .text((d) => (o.valueFormat || d3.format(","))(d.v));
-  Charts.tween(el, vl, () => "stl", ["x", "y"]);
+  f.g.append("g").attr("class", "axis").attr("transform", `translate(0,${f.h})`)
+    .call(d3.axisBottom(x).tickSize(0).tickValues(small ? o.cols.filter((d, i) => i % 2 === 0) : o.cols))
+    .select(".domain").remove();
+  f.g.append("g").attr("class", "axis").call(d3.axisLeft(y).tickSize(0)).select(".domain").remove();
+
+  const rect = f.g.append("g").selectAll("rect").data(cells).join("rect")
+    .attr("x", (d) => x(d.col)).attr("y", (d) => y(d.row))
+    .attr("width", x.bandwidth()).attr("height", y.bandwidth())
+    .attr("rx", 4).attr("fill", (d) => colour(d.value));
+  Charts.tween(el, rect, (d) => "c:" + d.row + ":" + d.col, ["fill"]);
+  App.tip.bind(rect, o.tip, { onSelect: o.onSelect });
+  if (o.flag) {
+    const hatch = Charts.hatch(f.svg);
+    f.g.append("g").selectAll("rect").data(cells.filter((d) => o.flag(d.row, d.col))).join("rect")
+      .attr("x", (d) => x(d.col)).attr("y", (d) => y(d.row)).attr("width", x.bandwidth()).attr("height", y.bandwidth())
+      .attr("rx", 4).attr("fill", hatch).style("pointer-events", "none");
+  }
+  if (o.focusCol !== undefined && x(o.focusCol) !== undefined) {
+    const fr = f.g.append("rect").attr("x", x(o.focusCol) - 3).attr("y", -3).attr("width", x.bandwidth() + 6).attr("height", f.h + 6)
+      .attr("rx", 8).attr("fill", "none").attr("stroke", "var(--text)").attr("stroke-width", 2).style("pointer-events", "none");
+    Charts.tween(el, fr, () => "__focusCol", ["x"]);
+  }
+  if (x.bandwidth() > 44) {
+    const fmt = o.cellFormat || d3.format(".2s");
+    f.g.append("g").selectAll("text").data(cells).join("text")
+      .attr("x", (d) => x(d.col) + x.bandwidth() / 2).attr("y", (d) => y(d.row) + y.bandwidth() / 2).attr("dy", "0.35em")
+      .attr("text-anchor", "middle").style("font-size", "11px").style("font-weight", 700).style("pointer-events", "none")
+      .attr("fill", (d) => Charts.textOn(colour(d.value)))
+      .text((d) => fmt(d.value));
+  }
+};
+
+/* ---------------------------------------------------------
+   Lollipop chart: a thin stick and a dot for each category
+   o.data [{x, y, colour}], o.focusX, o.valueFormat, o.yFormat, o.onSelect(d), o.tip(d)
+   --------------------------------------------------------- */
+Charts.lollipop = (el, o) => {
+  const small = el.clientWidth < 520;
+  const m = { top: 24, right: 12, bottom: 30, left: small ? 40 : 50 };
+  const f = Charts.frame(el, o, m);
+  f.marginLeft = m.left;
+  const x = d3.scaleBand().domain(o.data.map((d) => d.x)).range([0, f.w]).padding(0.3);
+  const y = d3.scaleLinear().domain([0, (o.yMax || d3.max(o.data, (d) => d.y) || 1) * 1.15]).nice().range([f.h, 0]);
+  f.g.append("g").attr("class", "grid-lines").call(d3.axisLeft(y).ticks(4).tickSize(-f.w).tickFormat(""));
+  f.g.append("g").attr("class", "axis").attr("transform", `translate(0,${f.h})`).call(d3.axisBottom(x).tickSize(0));
+  f.g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(4).tickFormat(o.yFormat || d3.format("~s")));
+  Charts.yTitle(f.g, f, o.yLabel);
+  const g = f.g.append("g").selectAll("g").data(o.data).join("g").attr("class", "series")
+    .attr("opacity", (d) => (o.focusX === undefined || d.x === o.focusX ? 1 : 0.4));
+  const cx = (d) => x(d.x) + x.bandwidth() / 2;
+  const st = g.append("line").attr("x1", cx).attr("x2", cx).attr("y1", f.h).attr("y2", (d) => y(d.y)).attr("stroke", (d) => d.colour).attr("stroke-width", 3);
+  Charts.tween(el, st, (d) => "ls:" + d.x, ["y2"], () => ({ y2: f.h }));
+  const dot = g.append("circle").attr("cx", cx).attr("cy", (d) => y(d.y)).attr("r", Math.min(11, x.bandwidth() / 3)).attr("fill", (d) => d.colour)
+    .attr("stroke", "var(--surface)").attr("stroke-width", 2);
+  Charts.tween(el, dot, (d) => "ld:" + d.x, ["cy"], () => ({ cy: f.h }));
+  App.tip.bind(dot, o.tip, { onSelect: o.onSelect });
+  const vl = g.append("text").attr("class", "value-label").attr("x", cx).attr("y", (d) => y(d.y) - Math.min(11, x.bandwidth() / 3) - 6)
+    .attr("text-anchor", "middle").text((d) => (o.valueFormat || d3.format(","))(d.y));
+  Charts.tween(el, vl, (d) => "lv:" + d.x, ["y"]);
+};
+
+/* ---------------------------------------------------------
+   Treemap: rectangle area = share of the total
+   o.data [{label, value, colour}], o.tip(d), o.onSelect(d)
+   --------------------------------------------------------- */
+Charts.treemap = (el, o) => {
+  const f = Charts.frame(el, o, { top: 2, right: 2, bottom: 2, left: 2 });
+  const total = d3.sum(o.data, (d) => d.value) || 1;
+  const root = d3.hierarchy({ children: o.data.filter((d) => d.value > 0) }).sum((d) => d.value || 0).sort((a, b) => b.value - a.value);
+  d3.treemap().size([f.w, f.h]).paddingInner(3).round(true)(root);
+  const leaves = root.leaves();
+  const g = f.g.selectAll("g").data(leaves).join("g").attr("class", "series");
+  const r = g.append("rect").attr("x", (d) => d.x0).attr("y", (d) => d.y0)
+    .attr("width", (d) => Math.max(0, d.x1 - d.x0)).attr("height", (d) => Math.max(0, d.y1 - d.y0))
+    .attr("rx", 5).attr("fill", (d) => d.data.colour);
+  Charts.tween(el, r, (d) => "tm:" + d.data.label, ["x", "y", "width", "height"]);
+  App.tip.bind(r, (d) => o.tip(d.data), { onSelect: o.onSelect ? (d) => o.onSelect(d.data) : null });
+  // name and share, only where the box is big enough to read them
+  g.each(function (d) {
+    const w = d.x1 - d.x0, h = d.y1 - d.y0;
+    if (w < 56 || h < 30 || d.data.label.length * 6.8 > w - 12) return; // too small to read: the tooltip still has it
+    const ink = Charts.textOn(d.data.colour);
+    const t = d3.select(this).append("text").attr("x", d.x0 + 8).attr("y", d.y0 + 18).attr("fill", ink).attr("class", "tm-label").style("pointer-events", "none");
+    t.append("tspan").attr("font-weight", 800).text(d.data.label);
+    if (h > 44) t.append("tspan").attr("x", d.x0 + 8).attr("dy", 16).text(d3.format(".0f")((d.value / total) * 100) + "%");
+  });
+};
+
+/* ---------------------------------------------------------
+   Tile map of Australia: one square per state, placed roughly
+   where it sits on the map, coloured by value
+   o.tiles [{key, col, row, value, flag}], o.selected, o.format(v),
+   o.onSelect(d), o.tip(d)
+   --------------------------------------------------------- */
+Charts.tilemap = (el, o) => {
+  const f = Charts.frame(el, o, { top: 6, right: 6, bottom: 30, left: 6 });
+  const cols = 4, rows = 4;
+  const s = Math.min(f.w / cols, f.h / rows);
+  const ox = (f.w - s * cols) / 2, oy = (f.h - s * rows) / 2;
+  const vals = o.tiles.map((d) => d.value);
+  const lo = o.min !== undefined ? o.min : d3.min(vals), hi = o.max !== undefined ? o.max : d3.max(vals);
+  const colour = d3.scaleLinear().domain([lo, hi]).range([App.css("--heat-low"), App.css("--heat-high")]).interpolate(d3.interpolateRgb);
+  const hatch = Charts.hatch(f.svg);
+  const g = f.g.selectAll("g").data(o.tiles).join("g").attr("class", "series")
+    .attr("transform", (d) => `translate(${ox + d.col * s},${oy + d.row * s})`);
+  const r = g.append("rect").attr("width", s - 6).attr("height", s - 6).attr("rx", 10)
+    .attr("fill", (d) => colour(d.value))
+    .attr("stroke", (d) => (d.key === o.selected ? "var(--text)" : "none")).attr("stroke-width", 3.5);
+  Charts.tween(el, r, (d) => "tl:" + d.key, ["fill"]);
+  g.filter((d) => d.flag).append("rect").attr("width", s - 6).attr("height", s - 6).attr("rx", 10).attr("fill", hatch).style("pointer-events", "none");
+  g.append("text").attr("x", (s - 6) / 2).attr("y", (s - 6) / 2 - 4).attr("text-anchor", "middle").attr("class", "tile-key")
+    .attr("fill", (d) => Charts.textOn(colour(d.value))).style("pointer-events", "none").text((d) => d.key);
+  g.append("text").attr("x", (s - 6) / 2).attr("y", (s - 6) / 2 + 16).attr("text-anchor", "middle").attr("class", "tile-val")
+    .attr("fill", (d) => Charts.textOn(colour(d.value))).style("pointer-events", "none").text((d) => (o.format || d3.format(".1f"))(d.value) + (d.flag ? "*" : ""));
+  App.tip.bind(r, o.tip, { onSelect: o.onSelect });
+  // colour key under the map
+  const kw = Math.min(220, f.w * 0.6), kx = (f.w - kw) / 2, ky = f.h + 10;
+  const id = "tg" + Math.random().toString(36).slice(2, 7);
+  const grad = f.svg.append("defs").append("linearGradient").attr("id", id);
+  grad.append("stop").attr("offset", "0%").attr("stop-color", colour(lo));
+  grad.append("stop").attr("offset", "100%").attr("stop-color", colour(hi));
+  f.g.append("rect").attr("x", kx).attr("y", ky).attr("width", kw).attr("height", 8).attr("rx", 4).attr("fill", `url(#${id})`);
+  f.g.append("text").attr("class", "axis-title").attr("x", kx - 6).attr("y", ky + 8).attr("text-anchor", "end").text((o.format || d3.format(".1f"))(lo));
+  f.g.append("text").attr("class", "axis-title").attr("x", kx + kw + 6).attr("y", ky + 8).text((o.format || d3.format(".1f"))(hi));
+};
+
+/* ---------------------------------------------------------
+   100% stacked bars: one bar per group, split into parts that add to 100%
+   o.rows [labels], o.parts [{key, label, colour}], o.value(row, key) in %,
+   o.tip(d), o.onSelect(d)
+   --------------------------------------------------------- */
+Charts.stack100 = (el, o) => {
+  const longest = d3.max(o.rows, (r) => r.length) || 6;
+  const m = { top: 30, right: 14, bottom: 26, left: Math.max(70, longest * 7 + 16) };
+  const f = Charts.frame(el, o, m);
+  f.marginLeft = m.left;
+  const y = d3.scaleBand().domain(o.rows).range([0, f.h]).padding(0.28);
+  const x = d3.scaleLinear().domain([0, 100]).range([0, f.w]);
+  f.g.append("g").attr("class", "grid-lines").attr("transform", `translate(0,${f.h})`).call(d3.axisBottom(x).ticks(4).tickSize(-f.h).tickFormat(""));
+  f.g.append("g").attr("class", "axis").attr("transform", `translate(0,${f.h})`).call(d3.axisBottom(x).ticks(4).tickFormat((v) => v + "%"));
+  f.g.append("g").attr("class", "axis").call(d3.axisLeft(y).tickSize(0)).select(".domain").remove();
+  Charts.legendRow(f.g, o.parts);
+  const segs = o.rows.flatMap((r) => { let x0 = 0; return o.parts.map((p) => { const v = o.value(r, p.key) || 0; const d = { row: r, part: p, value: v, x0 }; x0 += v; return d; }); });
+  const rects = f.g.append("g").selectAll("rect").data(segs).join("rect")
+    .attr("x", (d) => x(d.x0)).attr("width", (d) => Math.max(0, x(d.value) - 1.5)).attr("y", (d) => y(d.row)).attr("height", y.bandwidth())
+    .attr("fill", (d) => d.part.colour).attr("rx", 3);
+  Charts.tween(el, rects, (d) => "s1:" + d.row + d.part.key, ["x", "width"], () => ({ width: 0 }));
+  App.tip.bind(rects, o.tip, { onSelect: o.onSelect });
+  const lab = f.g.append("g").selectAll("text").data(segs.filter((d) => x(d.value) > 38)).join("text")
+    .attr("x", (d) => x(d.x0 + d.value / 2)).attr("y", (d) => y(d.row) + y.bandwidth() / 2).attr("dy", "0.35em").attr("text-anchor", "middle")
+    .attr("class", "seg-label").attr("fill", (d) => Charts.textOn(d.part.colour)).style("pointer-events", "none")
+    .text((d) => d3.format(".0f")(d.value) + "%");
+  Charts.tween(el, lab, (d) => "s1l:" + d.row + d.part.key, ["x"]);
 };

@@ -11,12 +11,12 @@ Everything is in `index.html`. The page tabs under the title bar show one report
 
 | Tab | Page | Visuals |
 |---|---|---|
-| 1 | Overview | 4 KPI cards, admissions by year (65+ vs under 65), by age, by road user, by remoteness |
-| 2 | Age and sex | growth since 2011 by age, men vs women by age, age by year heatmap |
-| 3 | Road users | road users over time, what they collided with, road user mix 65+ vs under 65 |
-| 4 | Hospital stay | average days by age, average stay by road user, 65+ share of admissions vs bed days |
-| 5 | States | 65+ share by state, 2011 vs selected year, selected state vs Australia |
-| 6 | First Nations | growth since 2011, age profile, where people live |
+| 1 | Overview | 4 KPI cards, stacked area (65+ vs under 65 by year), age columns, road user donut, remoteness bars |
+| 2 | Age and sex | growth line (2011 = 100), men vs women butterfly, age by year heatmap |
+| 3 | Road users | road users line, counterparty treemap, road user mix grouped bars |
+| 4 | Hospital stay | average stay lollipop, average stay dumbbell by road user, 65+ share line |
+| 5 | States | tile map of Australia, 2011 vs selected year dumbbell, state vs Australia line |
+| 6 | First Nations | growth line, age profile butterfly, where people live 100% stacked bars |
 | 7 | About the data | source, key terms, colour key, team, CSV downloads |
 
 ## Folder structure
@@ -25,7 +25,7 @@ Everything is in `index.html`. The page tabs under the title bar show one report
 index.html          the whole report
 css/report.css      themes, layout, charts
 js/core.js          themes, view size, tooltip, keyboard, pop-up, data loading, CSV and PNG download
-js/charts.js        reusable D3 charts (line, column, stacked column, bars, grouped bars, dumbbell, heatmap, butterfly)
+js/charts.js        reusable D3 charts (line, area, column, grouped bar, donut, dumbbell, butterfly, heatmap, lollipop, treemap, tile map, 100% stacked bar)
 js/report.js        filters, cross-filtering, KPI cards and every visual
 data/               the three KNIME CSV outputs
 images/             title tile photos and illustrations

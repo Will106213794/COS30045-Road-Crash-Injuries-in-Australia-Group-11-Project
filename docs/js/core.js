@@ -18,7 +18,10 @@ const App = {};
 App.DATA_FILE = "data/road_crash_hospitalisations.csv";
 App.AGE_ORDER = ["0-7", "8-16", "17-25", "26-39", "40-64", "65-74", "75+"];
 App.OLDER_AGES = ["65-74", "75+"];
-App.RU_ORDER = ["Car occupants", "Motorcyclist", "Pedal cyclist", "Pedestrian", "Other"];
+// "Truck, bus or van" groups heavy vehicle, bus and pick-up/van occupants.
+// Rows BITRE records as "Other or unknown" road user are kept in the totals
+// but never shown as a category (tutor feedback: no "Other" or "Unknown" labels).
+App.RU_ORDER = ["Car occupants", "Motorcyclist", "Pedal cyclist", "Pedestrian", "Truck, bus or van"];
 App.YEARS = d3.range(2011, 2022);
 
 App.fmt = d3.format(",");
@@ -38,7 +41,7 @@ App.ruColour = (group) =>
     Motorcyclist: App.css("--c-moto"),
     "Pedal cyclist": App.css("--c-cycle"),
     Pedestrian: App.css("--c-ped"),
-    Other: App.css("--c-other"),
+    "Truck, bus or van": App.css("--c-other"),
   })[group] || App.css("--c-other");
 
 /* In the colour-blind theme every series also gets its own dash pattern. */
@@ -511,7 +514,8 @@ App.data = {
         : ru === "Motorcyclist" ? "Motorcyclist"
         : ru === "Pedal cyclist" ? "Pedal cyclist"
         : ru === "Pedestrian" ? "Pedestrian"
-        : "Other";
+        : ru === "Other or unknown" ? "Not recorded"
+        : "Truck, bus or van";
 
     this.promise = d3
       .csv(App.DATA_FILE, (d) => ({

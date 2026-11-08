@@ -40,24 +40,28 @@ const R = {
   },
 };
 
-R.AREAS = ["Major Cities", "Regional", "Remote", "Missing"];
-R.areaLabel = (a) => (a === "Missing" ? "Not stated" : a);
+/* Tutor and peer feedback: no "Other", "Unknown" or "Not stated" data on screen.
+   Records with an unknown age, sex, road user or remoteness area are left out
+   when the data loads (about 3%), and the counterparty chart leaves out
+   crashes with no recorded counterparty. */
+R.AREAS = ["Major Cities", "Regional", "Remote"];
+R.areaLabel = (a) => a;
 R.CP = {
   "Car, pick-up truck or van": "Car, ute or van",
   "Non-collision transport accident": "No collision",
   "Fixed or stationary object": "Fixed object",
-  "Other and unspecified transport accidents": "Other or unspecified",
   "Heavy transport vehicle or bus": "Truck or bus",
   "Pedestrian or animal": "Pedestrian or animal",
   "2- or 3- wheeled motor vehicle": "Motorbike",
   "Pedal cycle": "Bicycle",
-  "Other non-motor vehicle": "Other non-motor",
+  "Other non-motor vehicle": "Non-motor vehicle",
   Train: "Train",
 };
 
 /* ---------- small helpers ---------- */
-R.M = () => (R.f.measure === "hosp" ? "Admissions" : "Bed days");
-R.m = () => (R.f.measure === "hosp" ? "admissions" : "bed days");
+R.M = () => (R.f.measure === "hosp" ? "Hospitalised injuries" : "Bed days");
+R.m = () => (R.f.measure === "hosp" ? "hospitalised injuries" : "bed days");
+R.K = () => (R.f.measure === "hosp" ? "Injuries" : "Bed days"); // short label for KPI cards
 R.v = (d) => (R.f.measure === "hosp" ? d.hosp : d.bed);
 R.fmtS = (v) => (Math.abs(v) >= 10000 ? d3.format(".3~s")(v).replace("G", "B") : App.fmt(Math.round(v)));
 R.pts = (v) => (v > 0 ? "+" : "") + d3.format(".1f")(v) + " pts";
@@ -363,16 +367,12 @@ R.refresh = () => {
 };
 
 R.note = () => {
+  // kept very short on purpose: only says something when it matters
   const uses = R.USES[R.page] || [];
   const on = ["sex", "age", "ru", "area"].filter((k) => uses.includes(k) && R.f[k] !== "All");
   const el = document.getElementById("filterNote");
-  if (R.page >= 5) {
-    el.innerHTML = R.page === 7 ? "" : "This page uses a separate file: only <b>Year</b> and <b>Measure</b> apply.";
-    return;
-  }
-  el.innerHTML = on.length
-    ? `<b>${on.length} filter${on.length > 1 ? "s" : ""} on.</b> Click a highlighted bar again or press Reset to clear.`
-    : "Tip: click any bar or point to filter the page.";
+  if (R.page === 5 || R.page === 6) el.innerHTML = "Only <b>Year</b> and <b>Measure</b> apply here";
+  else el.innerHTML = on.length ? `<b>${on.length} filter${on.length > 1 ? "s" : ""} on</b>` : "";
 };
 
 /* =========================================================
@@ -380,10 +380,10 @@ R.note = () => {
    ========================================================= */
 R.page1 = () => {
   const older = (y, skip = ["age"]) => R.one({ year: y, skip, where: (d) => d.older });
-  R.kpi({ id: "k1-1", label: () => R.M(), value: (y) => R.one({ year: y }), fmt: R.fmtS, delta: R.dPct });
-  R.kpi({ id: "k1-2", label: () => R.M() + ", aged 65+", value: (y) => older(y), fmt: R.fmtS, delta: R.dPct });
+  R.kpi({ id: "k1-1", label: () => R.K(), value: (y) => R.one({ year: y }), fmt: R.fmtS, delta: R.dPct });
+  R.kpi({ id: "k1-2", label: () => R.K() + ", aged 65+", value: (y) => older(y), fmt: R.fmtS, delta: R.dPct });
   R.kpi({
-    id: "k1-3", label: () => "65+ share of " + R.m(), unit: "",
+    id: "k1-3", label: () => "65+ share of " + R.K().toLowerCase(), unit: "",
     value: (y) => { const all = R.one({ year: y, skip: ["age"] }); return all ? (older(y) / all) * 100 : NaN; },
     fmt: (v) => d3.format(".1f")(v) + "%", delta: R.dPts,
   });
@@ -401,12 +401,12 @@ R.page1 = () => {
   const byYear = () => R.q({ by: (d) => d.year + "|" + (d.older ? "o" : "y") });
   R.tile({
     id: "v1-1", file: "admissions_by_year",
-    title: () => R.M() + " by year",
-    ctx: () => R.ctx({ years: true, extra: "click a year" }),
+    title: () => `${R.M()} by year, aged 65+ and under 65`,
+    ctx: () => R.ctx({ years: true, extra: "click a dot to pick the year" }),
     draw: (el, opt) => {
       const m = byYear();
-      Charts.stack(el, {
-        ...opt, ariaLabel: `Stacked columns of ${R.m()} per year, under 65 and 65+`,
+      Charts.area(el, {
+        ...opt, ariaLabel: `Stacked area chart of ${R.m()} per year, under 65 and 65+`, valueFormat: R.fmtS,
         cats: App.YEARS, parts: parts(), value: (c, k) => m.get(c + "|" + k) || 0, focusX: R.f.year,
         onSelect: (y) => { R.stop(); R.set("year", y); },
         tip: (d) => {
@@ -425,6 +425,7 @@ R.page1 = () => {
   const byAge = () => R.q({ year: R.f.year, skip: ["age"], by: (d) => d.age });
   R.tile({
     id: "v1-2", file: "by_age_group",
+    title: () => `${R.M()} by age group, ${R.f.year}`,
     ctx: () => R.ctx({ skip: ["age"], extra: "click to filter" }),
     draw: (el, opt) => {
       const m = byAge();
@@ -440,20 +441,21 @@ R.page1 = () => {
     table: () => { const m = byAge(); return { columns: [{ key: "age", label: "Age group" }, { key: "v", label: R.M(), num: true, format: App.fmt }], rows: App.AGE_ORDER.map((a) => ({ age: a, v: m.get(a) || 0 })) }; },
   });
 
-  // V3 road users (click to filter)
+  // V3 road users as a donut (click a slice to filter)
   const byRu = () => R.q({ year: R.f.year, skip: ["ru"], by: (d) => d.ru });
   R.tile({
     id: "v1-3", file: "by_road_user",
-    ctx: () => R.ctx({ skip: ["ru"], extra: "click to filter" }),
+    title: () => `${R.M()} by road user, ${R.f.year}`,
+    ctx: () => R.ctx({ skip: ["ru"], extra: "click a slice to filter" }),
     draw: (el, opt) => {
       const m = byRu();
-      const tot = d3.sum(m.values());
-      Charts.hbar(el, {
-        ...opt, ariaLabel: `Bars of ${R.m()} by road user in ${R.f.year}`, labelSpace: 96,
-        data: App.RU_ORDER.map((r) => ({ label: r, value: m.get(r) || 0, colour: App.ruColour(r) })).sort((a, b) => b.value - a.value),
+      const data = App.RU_ORDER.map((r) => ({ label: r, value: m.get(r) || 0, colour: App.ruColour(r) }));
+      const tot = d3.sum(data, (d) => d.value);
+      Charts.donut(el, {
+        ...opt, ariaLabel: `Donut chart of ${R.m()} by road user in ${R.f.year}`, data,
         selected: R.f.ru === "All" ? null : R.f.ru,
-        valueText: (d) => `${R.fmtS(d.value)} (${d3.format(".0f")(tot ? (d.value / tot) * 100 : 0)}%)`,
-        axisFormat: d3.format("~s"),
+        centre: (() => { const top = data.find((d) => d.label === R.f.ru) || [...data].sort((a, b) => b.value - a.value)[0];
+          return { value: d3.format(".0f")(tot ? (top.value / tot) * 100 : 0) + "%", title: top.label.toLowerCase() }; })(),
         onSelect: (d) => R.set("ru", d.label, true),
         tip: (d) => App.tipCard({ kicker: R.M(), chip: R.f.year, title: d.label, colour: d.colour, value: App.fmt(d.value), rows: [["Share of road users", App.pct(tot ? (d.value / tot) * 100 : 0)]] }),
       });
@@ -461,23 +463,26 @@ R.page1 = () => {
     table: () => { const m = byRu(); return { columns: [{ key: "r", label: "Road user" }, { key: "v", label: R.M(), num: true, format: App.fmt }], rows: App.RU_ORDER.map((r) => ({ r, v: m.get(r) || 0 })) }; },
   });
 
-  // V4 remoteness (click to filter)
+  // V4 remoteness as horizontal bars, largest first (click a bar to filter)
+  const AREA_COL = { "Major Cities": "--c-car", Regional: "--c-cycle", Remote: "--c-ped" };
   const byArea = () => R.q({ year: R.f.year, skip: ["area"], by: (d) => d.area });
   R.tile({
     id: "v1-4", file: "by_remoteness",
-    ctx: () => R.ctx({ skip: ["area"], extra: "click to filter" }),
+    title: () => `${R.M()} by remoteness area, ${R.f.year}`,
+    ctx: () => R.ctx({ skip: ["area"], extra: "click a bar to filter" }),
     draw: (el, opt) => {
       const m = byArea();
-      const tot = d3.sum(m.values());
-      Charts.bar(el, {
-        ...opt, ariaLabel: `Columns of ${R.m()} by remoteness in ${R.f.year}`,
-        data: R.AREAS.map((a) => ({ x: R.areaLabel(a), key: a, y: m.get(a) || 0, colour: a === "Missing" ? App.css("--c-neutral") : App.css("--c-younger"), showLabel: true })),
-        focusX: R.f.area === "All" ? undefined : R.areaLabel(R.f.area), valueFormat: R.fmtS,
-        onSelect: (d) => R.set("area", d.key, true),
-        tip: (d) => App.tipCard({ kicker: R.M(), chip: R.f.year, title: d.x, colour: d.colour, value: App.fmt(d.y), rows: [["Share", App.pct(tot ? (d.y / tot) * 100 : 0)]] }),
+      const data = R.AREAS.map((a) => ({ label: a, value: m.get(a) || 0, colour: App.css(AREA_COL[a]) })).sort((x, y) => y.value - x.value);
+      const tot = d3.sum(data, (d) => d.value);
+      Charts.hbar(el, {
+        ...opt, ariaLabel: `Bars of ${R.m()} by remoteness area in ${R.f.year}`, labelSpace: 96, data,
+        selected: R.f.area === "All" ? null : R.f.area,
+        valueText: (d) => `${R.fmtS(d.value)} (${d3.format(".0f")(tot ? (d.value / tot) * 100 : 0)}%)`, axisFormat: d3.format("~s"),
+        onSelect: (d) => R.set("area", d.label, true),
+        tip: (d) => App.tipCard({ kicker: R.M(), chip: R.f.year, title: d.label, colour: d.colour, value: App.fmt(d.value), rows: [["Share of all areas", App.pct(tot ? (d.value / tot) * 100 : 0)]] }),
       });
     },
-    table: () => { const m = byArea(); return { columns: [{ key: "a", label: "Remoteness" }, { key: "v", label: R.M(), num: true, format: App.fmt }], rows: R.AREAS.map((a) => ({ a: R.areaLabel(a), v: m.get(a) || 0 })) }; },
+    table: () => { const m = byArea(); return { columns: [{ key: "a", label: "Remoteness area" }, { key: "v", label: R.M(), num: true, format: App.fmt }], rows: R.AREAS.map((a) => ({ a, v: m.get(a) || 0 })) }; },
   });
 };
 
@@ -507,6 +512,7 @@ R.page2 = () => {
   };
   R.tile({
     id: "v2-1", file: "growth_by_age",
+    title: () => `Growth in ${R.m()} by age group since 2011`,
     ctx: () => R.ctx({ years: true, skip: ["age"] }),
     draw: (el, opt) => Charts.line(el, {
       ...opt, legend: false, ariaLabel: "Line chart of growth since 2011 for each age group",
@@ -526,6 +532,7 @@ R.page2 = () => {
   const bySexAge = () => R.q({ year: R.f.year, skip: ["sex", "age"], by: (d) => d.sex + "|" + d.age });
   R.tile({
     id: "v2-2", file: "men_women_by_age",
+    title: () => `${R.M()} by sex and age group, ${R.f.year}`,
     ctx: () => R.ctx({ skip: ["sex", "age"], extra: "click to filter" }),
     draw: (el, opt) => {
       const m = bySexAge();
@@ -544,11 +551,12 @@ R.page2 = () => {
       rows: App.AGE_ORDER.map((a) => ({ age: a, m: m.get("Male|" + a) || 0, f: m.get("Female|" + a) || 0 })) }; },
   });
 
-  // V3 heatmap: every age, every year
+  // V3 heatmap: every age group in every year (darker = more)
   const heat = () => R.q({ skip: ["age"], by: (d) => d.age + "|" + d.year });
   R.tile({
     id: "v2-3", file: "age_by_year",
-    ctx: () => R.ctx({ years: true, skip: ["age"], extra: "darker = more" }),
+    title: () => `${R.M()} by age group and year`,
+    ctx: () => R.ctx({ years: true, skip: ["age"], extra: "darker = more · click a cell" }),
     draw: (el, opt) => {
       const m = heat();
       Charts.heatmap(el, {
@@ -586,7 +594,7 @@ R.page3 = () => {
   };
   R.tile({
     id: "v3-1", file: "road_users_over_time",
-    title: () => `Road users ${R.ageLabel(R.ageKey()).toLowerCase()}, over time`,
+    title: () => `${R.M()} by road user, ${R.ageLabel(R.ageKey()).toLowerCase()}, 2011 to 2021`,
     ctx: () => R.ctx({ years: true, skip: ["age"], extra: "click a line to filter" }),
     draw: (el, opt) => Charts.line(el, {
       ...opt, legend: false, ariaLabel: "Line chart of road users over time",
@@ -606,20 +614,21 @@ R.page3 = () => {
     return Object.keys(R.CP).map((k) => ({ label: R.CP[k], full: k, value: m.get(k) || 0 })).sort((a, b) => b.value - a.value);
   };
   R.tile({
-    id: "v3-2", file: "collided_with",
-    title: () => `What they collided with, ${R.ageLabel(R.ageKey()).toLowerCase()}`,
-    ctx: () => R.ctx({ skip: ["age"] }),
+    id: "v3-2", file: "by_counterparty",
+    title: () => `${R.M()} by counterparty, ${R.ageLabel(R.ageKey()).toLowerCase()}, ${R.f.year}`,
+    ctx: () => R.ctx({ skip: ["age"], extra: "what they collided with · box size = share" }),
     draw: (el, opt) => {
       const data = cps();
       const tot = d3.sum(data, (d) => d.value);
-      Charts.hbar(el, {
-        ...opt, ariaLabel: "Bars of what people collided with", labelSpace: 64,
-        data: data.map((d, i) => ({ ...d, colour: i < 3 ? App.css("--c-older") : App.css("--c-neutral") })),
-        valueText: (d) => d3.format(".0f")(tot ? (d.value / tot) * 100 : 0) + "%", axisFormat: d3.format("~s"),
-        tip: (d) => App.tipCard({ kicker: "Collided with", chip: R.f.year, title: d.full, colour: d.colour, value: App.fmt(d.value), rows: [["Share", App.pct(tot ? (d.value / tot) * 100 : 0)]] }),
+      const pal = ["--c-car", "--c-older", "--c-cycle", "--c-ped", "--c-older-2"];
+      Charts.treemap(el, {
+        ...opt, ariaLabel: "Treemap of what people collided with",
+        data: data.map((d, i) => ({ ...d, colour: App.css(pal[i] || "--c-neutral") })),
+        tip: (d) => App.tipCard({ kicker: "Counterparty", chip: R.f.year, title: d.full === "Other non-motor vehicle" ? "Non-motor vehicle (e.g. horse or tram)" : d.full === "Non-collision transport accident" ? "No collision (e.g. lost control or fell off)" : d.label,
+          colour: d.colour, value: App.fmt(d.value), rows: [["Share", App.pct(tot ? (d.value / tot) * 100 : 0)]] }),
       });
     },
-    table: () => ({ columns: [{ key: "full", label: "Counterparty" }, { key: "value", label: R.M(), num: true, format: App.fmt }], rows: cps() }),
+    table: () => ({ columns: [{ key: "label", label: "Counterparty" }, { key: "value", label: R.M(), num: true, format: App.fmt }], rows: cps() }),
   });
 
   // V3 road user mix, 65+ vs under 65 (share of each group)
@@ -630,7 +639,8 @@ R.page3 = () => {
   };
   R.tile({
     id: "v3-3", file: "road_user_mix",
-    ctx: () => R.ctx({ skip: ["age", "ru"], extra: "% of each age group" }),
+    title: () => `Road user mix by age, ${R.f.year}`,
+    ctx: () => R.ctx({ skip: ["age", "ru"], extra: "% of each age group · click to filter" }),
     draw: (el, opt) => {
       const x = mix();
       Charts.groupedHbar(el, {
@@ -674,15 +684,17 @@ R.page4 = () => {
   };
   R.tile({
     id: "v4-1", file: "average_stay_by_age",
-    ctx: () => R.ctx({ skip: ["age"], extra: "days per admission" }),
-    draw: (el, opt) => Charts.bar(el, {
-      ...opt, ariaLabel: "Columns of average days in hospital by age group",
+    title: () => `Average length of stay by age group, ${R.f.year}`,
+    ctx: () => R.ctx({ skip: ["age"], extra: "click to filter" }),
+    draw: (el, opt) => Charts.lollipop(el, {
+      ...opt, ariaLabel: "Lollipop chart of average days in hospital by age group", yLabel: "Days",
+      onSelect: (d) => R.set("age", d.x, true),
       data: byAge(), yFormat: d3.format("d"), valueFormat: d3.format(".1f"),
       focusX: App.AGE_ORDER.includes(R.f.age) ? R.f.age : undefined,
       tip: (d) => App.tipCard({ kicker: "Average stay", chip: R.f.year, title: "Age " + d.x, colour: d.colour, value: d3.format(".1f")(d.y), unit: "days",
-        rows: [["Admissions", App.fmt(d.h)], ["Bed days", App.fmt(d.b)]] }),
+        rows: [["Hospitalised injuries", App.fmt(d.h)], ["Bed days", App.fmt(d.b)]] }),
     }),
-    table: () => ({ columns: [{ key: "x", label: "Age group" }, { key: "h", label: "Admissions", num: true, format: App.fmt }, { key: "b", label: "Bed days", num: true, format: App.fmt }, { key: "y", label: "Average days", num: true, format: d3.format(".2f") }], rows: byAge() }),
+    table: () => ({ columns: [{ key: "x", label: "Age group" }, { key: "h", label: "Hospitalised injuries", num: true, format: App.fmt }, { key: "b", label: "Bed days", num: true, format: App.fmt }, { key: "y", label: "Average days", num: true, format: d3.format(".2f") }], rows: byAge() }),
   });
 
   // V2 average stay by road user, 65+ vs under 65
@@ -693,17 +705,18 @@ R.page4 = () => {
   };
   R.tile({
     id: "v4-2", file: "average_stay_by_road_user",
-    ctx: () => R.ctx({ skip: ["age", "ru"], extra: "days per admission" }),
+    title: () => `Average length of stay by road user and age, ${R.f.year}`,
+    ctx: () => R.ctx({ skip: ["age", "ru"], extra: "days per admission · click to filter" }),
     draw: (el, opt) => {
       const s = ruStay();
-      Charts.groupedHbar(el, {
-        ...opt, ariaLabel: "Grouped bars of average stay by road user",
-        categories: App.RU_ORDER,
-        groups: [{ key: "o", label: "Aged 65+", colour: App.css("--c-older") }, { key: "y", label: "Under 65", colour: App.css("--c-neutral") }],
-        value: (c, g) => s.get(c, g), format: d3.format(".1f"), selected: R.f.ru === "All" ? null : R.f.ru,
-        onSelect: (d) => R.set("ru", d.category, true),
-        tip: (d) => App.tipCard({ kicker: "Average stay", chip: R.f.year, title: `${d.category}, ${d.group.label}`, colour: d.group.colour, value: d3.format(".1f")(d.value), unit: "days",
-          rows: [["Admissions", App.fmt(s.h.get(d.group.key + "|" + d.category) || 0)]] }),
+      Charts.dumbbell(el, {
+        ...opt, ariaLabel: "Dumbbell chart of average stay by road user, under 65 and 65+", aLabel: "Under 65", bLabel: "Aged 65+",
+        rows: App.RU_ORDER.map((r) => ({ label: r, a: s.get(r, "y"), b: s.get(r, "o"), emphasis: R.f.ru === r })),
+        format: (v) => d3.format(".1f")(v) + " days",
+        onSelect: (d) => R.set("ru", d.label, true),
+        tip: (d, which) => { const g = which === "a" ? "y" : "o"; return App.tipCard({ kicker: "Average stay", chip: R.f.year, title: `${d.label}, ${which === "a" ? "under 65" : "aged 65+"}`,
+          colour: which === "a" ? App.css("--c-neutral") : App.css("--c-older"), value: d3.format(".1f")(which === "a" ? d.a : d.b), unit: "days",
+          rows: [["Hospitalised injuries", App.fmt(s.h.get(g + "|" + d.label) || 0)]] }); },
       });
     },
     table: () => { const s = ruStay(); return {
@@ -718,11 +731,12 @@ R.page4 = () => {
     const sh = (m, y) => { const o = m.get(y + "|true") || 0; const t = o + (m.get(y + "|false") || 0); return t ? (o / t) * 100 : 0; };
     return [
       { key: "bed", label: "Bed days", short: "Bed days", colour: App.css("--c-older"), emphasis: true, values: App.YEARS.map((y) => ({ x: y, y: sh(b, y) })) },
-      { key: "hosp", label: "Admissions", short: "Admissions", colour: App.css("--c-younger"), values: App.YEARS.map((y) => ({ x: y, y: sh(h, y) })) },
+      { key: "hosp", label: "Injuries", short: "Injuries", colour: App.css("--c-younger"), values: App.YEARS.map((y) => ({ x: y, y: sh(h, y) })) },
     ];
   };
   R.tile({
     id: "v4-3", file: "older_share_admissions_vs_bed_days",
+    title: () => "Share aged 65+ of hospitalised injuries and bed days, 2011 to 2021",
     ctx: () => R.ctx({ years: true, skip: ["age"] }),
     draw: (el, opt) => Charts.line(el, {
       ...opt, ariaLabel: "Line chart of the 65+ share of admissions and of bed days", legend: false,
@@ -731,7 +745,7 @@ R.page4 = () => {
       tip: (s, d) => App.tipCard({ kicker: "Aged 65+", chip: d.x, title: "Share of " + s.label.toLowerCase(), colour: s.colour, value: App.pct(d.y) }),
     }),
     table: () => { const s = shares(); return {
-      columns: [{ key: "y", label: "Year" }, { key: "h", label: "65+ share of admissions (%)", num: true, format: d3.format(".1f") }, { key: "b", label: "65+ share of bed days (%)", num: true, format: d3.format(".1f") }],
+      columns: [{ key: "y", label: "Year" }, { key: "h", label: "65+ share of hospitalised injuries (%)", num: true, format: d3.format(".1f") }, { key: "b", label: "65+ share of bed days (%)", num: true, format: d3.format(".1f") }],
       rows: App.YEARS.map((y, i) => ({ y, h: s[1].values[i].y, b: s[0].values[i].y })) }; },
   });
 };
@@ -754,12 +768,15 @@ R.page5 = (rows) => {
   };
   st.total = (state, year) => d3.sum(overall.filter((r) => r.state === state && r.year === year), (r) => v(r) || 0);
   // a fixed axis top across all years, so bars and dots move smoothly while playing
+  st.min = () => Math.floor(d3.min(App.STATES.flatMap((x) => App.YEARS.map((y) => st.agg(x, y).share))));
+  // rough position of each state on a 4 x 4 grid shaped like Australia
+  const TILE = { NT: [1, 0], Qld: [2, 0], WA: [0, 1], SA: [1, 1], NSW: [2, 1], ACT: [3, 1], Vic: [2, 2], Tas: [2, 3] };
   st.max = () => Math.ceil(d3.max(App.STATES.flatMap((x) => App.YEARS.map((y) => st.agg(x, y).share))) / 5) * 5;
   st.setPick = (x) => { st.pick = x; R.refresh(); };
   const np = (d) => (d.flag ? [["Note", "includes n.p. values"]] : []);
   const name = (x) => (x === "AUS" ? "Australia" : App.STATE_NAMES[x]);
 
-  R.kpi({ id: "k5-1", label: () => `${R.M()}, ${st.pick}`, value: (y) => st.total(st.pick, y), fmt: R.fmtS, delta: R.dPct });
+  R.kpi({ id: "k5-1", label: () => `${R.K()}, ${st.pick}`, value: (y) => st.total(st.pick, y), fmt: R.fmtS, delta: R.dPct });
   R.kpi({ id: "k5-2", label: () => `65+ share, ${st.pick}`, value: (y) => st.agg(st.pick, y).share, fmt: (x) => d3.format(".1f")(x) + "%", delta: R.dPts });
   R.kpi({ id: "k5-3", label: () => "65+ share, Australia", value: (y) => st.agg("AUS", y).share, fmt: (x) => d3.format(".1f")(x) + "%", delta: R.dPts });
   R.kpi({
@@ -772,13 +789,15 @@ R.page5 = (rows) => {
   // V1 columns: share aged 65+ in each state for the selected year (striped = includes n.p.)
   R.tile({
     id: "v5-1", file: "states_older_share_year",
-    ctx: () => `${R.ctx()} · click a state · striped = includes n.p.`,
-    draw: (el, opt) => Charts.bar(el, {
-      ...opt, ariaLabel: `Columns of the share aged 65+ by state in ${R.f.year}`,
-      data: App.STATES.map((x) => { const a = st.agg(x, R.f.year); return { ...a, x, y: a.share, colour: x === st.pick ? App.css("--c-older") : App.css("--c-younger"), showLabel: true }; }),
-      yMax: st.max(), yFormat: (x) => x + "%", valueFormat: (x) => d3.format(".0f")(x) + "%",
-      onSelect: (d) => st.setPick(d.x),
-      tip: (d) => App.tipCard({ kicker: "Share aged 65+", chip: R.f.year, title: name(d.x), colour: d.colour, value: App.pct(d.share),
+    title: () => `Share aged 65+ by state, ${R.f.year}`,
+    ctx: () => `${R.ctx()} · darker = higher · click a state · * includes n.p.`,
+    draw: (el, opt) => Charts.tilemap(el, {
+      ...opt, ariaLabel: `Tile map of the share aged 65+ by state in ${R.f.year}`,
+      // each state sits roughly where it is on the map of Australia
+      tiles: App.STATES.map((x) => { const a = st.agg(x, R.f.year); const [col, row] = TILE[x]; return { ...a, key: x, col, row, value: a.share }; }),
+      selected: st.pick, min: st.min(), max: st.max(), format: (x) => d3.format(".1f")(x) + "%",
+      onSelect: (d) => st.setPick(d.key),
+      tip: (d) => App.tipCard({ kicker: "Share aged 65+", chip: R.f.year, title: name(d.key), colour: App.css("--c-older"), value: App.pct(d.share),
         rows: [[R.M() + " 65+", App.fmt(d.older)], [R.M() + " all ages", App.fmt(d.all)], ...np(d)] }),
     }),
     table: () => ({
@@ -790,7 +809,7 @@ R.page5 = (rows) => {
   // V2 dumbbell: 2011 vs selected year
   R.tile({
     id: "v5-2", file: "states_2011_vs_year",
-    title: () => `Share aged 65+, 2011 vs ${R.f.year}`,
+    title: () => `Share aged 65+ by state, 2011 vs ${R.f.year}`,
     ctx: () => `${R.ctx()} · * includes n.p.`,
     draw: (el, opt) => Charts.dumbbell(el, {
       ...opt, ariaLabel: "Dumbbell chart of the share aged 65+ by state", aLabel: "2011", bLabel: String(R.f.year),
@@ -812,8 +831,8 @@ R.page5 = (rows) => {
   }));
   R.tile({
     id: "v5-3", file: "state_vs_australia",
-    title: () => `${name(st.pick)} vs Australia`,
-    ctx: () => "2011 to 2021 · share aged 65+",
+    title: () => `Share aged 65+, ${name(st.pick)} vs Australia, 2011 to 2021`,
+    ctx: () => "2011 to 2021 · click a dot to pick the year",
     draw: (el, opt) => Charts.line(el, {
       ...opt, legend: false, ariaLabel: "Line chart of the picked state against Australia", series: lines(),
       yMin: 0, yFormat: (x) => x + "%", focusX: R.f.year,
@@ -844,8 +863,8 @@ R.page6 = (rows) => {
   };
   const pick = (list, cats, s, y, c) => shares(list, cats, s, y).find((d) => d.c === c);
 
-  R.kpi({ id: "k6-1", label: () => `${R.M()}, First Nations`, value: (y) => total(FN, y), fmt: R.fmtS, delta: R.dPct });
-  R.kpi({ id: "k6-2", label: () => `${R.M()}, non-Indigenous`, value: (y) => total(NI, y), fmt: R.fmtS, delta: R.dPct });
+  R.kpi({ id: "k6-1", label: () => `${R.K()}, First Nations`, value: (y) => total(FN, y), fmt: R.fmtS, delta: R.dPct });
+  R.kpi({ id: "k6-2", label: () => `${R.K()}, non-Indigenous`, value: (y) => total(NI, y), fmt: R.fmtS, delta: R.dPct });
   R.kpi({ id: "k6-3", label: () => "Aged 65+, First Nations", value: (y) => pick(age, App.FN_AGES, FN, y, "65+").share, fmt: (x) => d3.format(".1f")(x) + "%",
     delta: () => `vs <b>${App.pct(pick(age, App.FN_AGES, NI, R.f.year, "65+").share)}</b> non-Indigenous` });
   R.kpi({ id: "k6-4", label: () => "Remote areas, First Nations", value: (y) => pick(remote, ["Major Cities", "Regional", "Remote"], FN, y, "Remote").share, fmt: (x) => d3.format(".1f")(x) + "%",
@@ -864,7 +883,8 @@ R.page6 = (rows) => {
   });
   R.tile({
     id: "v6-1", file: "first_nations_growth",
-    ctx: () => "2011 to 2021 · 2011 = 100",
+    title: () => `Growth in ${R.m()} by First Nations status since 2011`,
+    ctx: () => "2011 to 2021 · 2011 = 100 · click a dot to pick the year",
     draw: (el, opt) => Charts.line(el, {
       ...opt, legend: false, ariaLabel: "Line chart of growth since 2011", series: growth(), refLine: 100, yMin: 80, yFormat: d3.format("d"), focusX: R.f.year,
       onSelect: (d) => { R.stop(); R.set("year", d.x); },
@@ -878,6 +898,7 @@ R.page6 = (rows) => {
   // V2 age profile butterfly
   R.tile({
     id: "v6-2", file: "first_nations_age_profile",
+    title: () => `${R.M()} by age group and First Nations status, ${R.f.year}`,
     ctx: () => `${R.ctx()} · % of each group`,
     draw: (el, opt) => {
       const [a, b] = G();
@@ -902,12 +923,18 @@ R.page6 = (rows) => {
   const AR = ["Major Cities", "Regional", "Remote"];
   R.tile({
     id: "v6-3", file: "first_nations_remoteness",
+    title: () => `${R.M()} by remoteness area and First Nations status, ${R.f.year}`,
     ctx: () => `${R.ctx()} · % of each group`,
-    draw: (el, opt) => Charts.groupedHbar(el, {
-      ...opt, ariaLabel: "Grouped bars of where people live", categories: AR, groups: G(),
-      value: (c, g) => pick(remote, AR, g, R.f.year, c).share, format: (x) => d3.format(".0f")(x) + "%",
-      tip: (d) => App.tipCard({ kicker: "Remoteness", chip: R.f.year, title: `${d.category}, ${d.group.label}`, colour: d.group.colour, value: App.pct(d.value), unit: "of the group" }),
-    }),
+    draw: (el, opt) => {
+      const COL = { "Major Cities": "--c-car", Regional: "--c-cycle", Remote: "--c-ped" };
+      Charts.stack100(el, {
+        ...opt, ariaLabel: "100% stacked bars of where people live, First Nations and non-Indigenous",
+        rows: ["First Nations", "Non-Indigenous"],
+        parts: AR.map((c) => ({ key: c, label: c, colour: App.css(COL[c]) })),
+        value: (r, c) => pick(remote, AR, r === "First Nations" ? FN : NI, R.f.year, c).share,
+        tip: (d) => App.tipCard({ kicker: "Where they live", chip: R.f.year, title: `${d.row}, ${d.part.label}`, colour: d.part.colour, value: App.pct(d.value), unit: "of the group" }),
+      });
+    },
     table: () => ({
       columns: [{ key: "c", label: "Remoteness" }, { key: "a", label: "First Nations (%)", num: true, format: d3.format(".1f") }, { key: "b", label: "Non-Indigenous (%)", num: true, format: d3.format(".1f") }],
       rows: AR.map((c) => ({ c, a: pick(remote, AR, FN, R.f.year, c).share, b: pick(remote, AR, NI, R.f.year, c).share })),
@@ -918,7 +945,7 @@ R.page6 = (rows) => {
 
 /* Colour key on the notes page (follows the theme) */
 R.legend = () => {
-  const items = [["--c-older", "Aged 65 to 74"], ["--c-older-2", "Aged 75+"], ["--c-neutral", "Other ages"], ["--c-car", "Car occupants"],
+  const items = [["--c-older", "Aged 65 to 74"], ["--c-older-2", "Aged 75+"], ["--c-neutral", "Ages under 65"], ["--c-car", "Car occupants"], ["--c-other", "Truck, bus or van"],
     ["--c-moto", "Motorcyclists"], ["--c-cycle", "Pedal cyclists"], ["--c-ped", "Pedestrians"]];
   document.getElementById("legendList").innerHTML = items.map(([c, l]) => `<li><span class="sw" style="background:var(${c})"></span>${l}</li>`).join("") +
     '<li><span class="sw hatch"></span>Includes n.p. values</li>';
@@ -992,6 +1019,12 @@ R.setupHeader = () => {
   document.addEventListener("pointerdown", (e) => { if (!panel.hidden && !e.target.closest("#settings, #displayBtn")) setOpen(false); });
   panel.addEventListener("keydown", (e) => { if (e.key === "Escape") { setOpen(false); dBtn.focus(); } });
   document.getElementById("howBtn").addEventListener("click", () => App.guide.open());
+  // the report description pop-up next to the title (hover, focus or click)
+  const pop = document.querySelector(".about-pop");
+  const info = document.getElementById("infoBtn");
+  info.addEventListener("click", () => { const on = !pop.classList.contains("open"); pop.classList.toggle("open", on); info.setAttribute("aria-expanded", on); });
+  document.addEventListener("pointerdown", (e) => { if (!e.target.closest(".about-pop")) { pop.classList.remove("open"); info.setAttribute("aria-expanded", false); } });
+  info.addEventListener("keydown", (e) => { if (e.key === "Escape") { pop.classList.remove("open"); info.setAttribute("aria-expanded", false); } });
 
   App.keys.handlers.push((e, key) => {
     if (App.modal.el && App.modal.el.classList.contains("open")) return false;
@@ -1023,11 +1056,14 @@ document.addEventListener("DOMContentLoaded", () => {
     R.cube = cube.map(([k, s]) => {
       const [year, age, sex, ru, area, cp] = k.split("|");
       return { year: +year, age, sex, ru, area, cp, older: App.OLDER_AGES.includes(age), hosp: s.hosp, bed: s.bed };
-    });
-      // show what D3 loaded, like Lab 6
-      console.log("d3.csv loaded", rows.length, "rows. First 3:", rows.slice(0, 3));
-      console.log("Grouped with d3.rollups:", R.cube.length, "rows", R.cube.slice(0, 3));
-      
+    })
+      // leave out uncertain records: road user "Other or unknown" and remoteness area not stated
+      // (unknown age and sex were already removed in App.data.load)
+      .filter((d) => d.ru !== "Not recorded" && d.area !== "Missing");
+
+    // show what D3 loaded, like Lab 6
+    console.log("d3.csv loaded", rows.length, "rows. First 3:", rows.slice(0, 3));
+    console.log("Grouped with d3.rollups:", R.cube.length, "rows", R.cube.slice(0, 3));
     R.page1();
     R.page2();
     R.page3();

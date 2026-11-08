@@ -276,11 +276,25 @@ button, select, input { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--border);
   position: relative; z-index: 20;
 }
-.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.brand > div { min-width: 0; }
-.brand .logo svg { width: 34px; height: 34px; display: block; }
-.brand strong { display: block; font-size: 1.02rem; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.brand span span, .brand div > span { display: block; color: var(--muted); font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Title: bigger, and the description moved into a pop-up behind the i button */
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand .logo svg { width: 44px; height: 44px; display: block; }
+.brand-title { margin: 0; font-size: clamp(1.25rem, 2vw, 1.7rem); font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; }
+.about-pop { position: relative; flex-shrink: 0; }
+.info-btn {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--muted); background: transparent; color: var(--muted);
+  font: italic 800 0.85rem Georgia, serif; cursor: pointer; display: grid; place-items: center; padding: 0;
+}
+.info-btn:hover, .about-pop.open .info-btn { border-color: var(--primary); color: var(--primary); }
+.about-card {
+  position: absolute; left: -20px; top: calc(100% + 10px); width: 320px; z-index: 70;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow);
+  padding: 12px 14px; font-size: 0.82rem; line-height: 1.45;
+  opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+.about-card strong { display: block; margin-bottom: 4px; font-size: 0.88rem; }
+.about-card p { margin: 0; color: var(--muted); }
+.about-pop:hover .about-card, .about-pop:focus-within .about-card, .about-pop.open .about-card { opacity: 1; visibility: visible; transform: none; }
 .top-actions { display: flex; align-items: center; gap: 6px; }
 .tbtn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -354,6 +368,11 @@ select {
 .p-three .kpi { grid-column: span 2; }
 .p-three .viz { grid-column: span 7; }
 .p-three .viz.tall { grid-column: 8 / span 5; grid-row: 2 / span 2; }
+/* States page: three tall charts side by side (map, dumbbell, line) */
+.p-cols { grid-template-rows: minmax(84px, auto) minmax(180px, 1fr) minmax(180px, 1fr); }
+.p-cols .hero { grid-column: span 4; }
+.p-cols .kpi { grid-column: span 2; }
+.p-cols .viz { grid-column: span 4; grid-row: 2 / span 2; }
 /* Notes page */
 .p-notes { grid-template-rows: minmax(84px, auto) minmax(150px, 1fr) minmax(150px, 1fr); }
 .p-notes .hero { grid-column: 1 / -1; }
@@ -371,10 +390,19 @@ select {
 .tile.viz:has(.mark:focus) { box-shadow: 0 0 0 3px var(--focus); }
 .tile header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
 .tile header .t { min-width: 0; flex: 1; }
-.tile h2 { font-size: 0.92rem; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tile .ctx { font-size: 0.72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile h2 { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* The small context line (year, filters, "click to filter") stays hidden
+   and only appears as a little label while the chart is hovered or focused. */
+.tile header .t { position: relative; }
+.tile .ctx {
+  position: absolute; left: 0; top: 100%; margin-top: 3px; z-index: 6; max-width: 100%;
+  font-size: 0.72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 7px; padding: 1px 8px;
+  opacity: 0; transform: translateY(-3px); pointer-events: none; transition: opacity 0.15s, transform 0.15s;
+}
+.tile:hover .ctx, .tile:focus-within .ctx { opacity: 1; transform: none; }
 .tile .ctx b { color: var(--accent-text); font-weight: 800; }
-.tile-tools { display: flex; gap: 2px; opacity: 0.6; transition: opacity 0.15s; }
+.tile-tools { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
 .tile:hover .tile-tools, .tile:focus-within .tile-tools { opacity: 1; }
 @media (hover: none) { .tile-tools { opacity: 1; } }
 .ibtn {
@@ -448,22 +476,31 @@ select {
 .team li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--border); padding-bottom: 5px; }
 .team strong { color: var(--text); font-size: 0.86rem; }
 
-/* Page tabs: under the title bar, above the filters */
+/* Page tabs: under the title bar, above the filters.
+   Tutor feedback: the navigation has its own colour band (--nav-*), so it
+   stands apart from the white title bar and the grey filter bar. */
+:root[data-theme="dark"]     { --nav-bg: #e69f00; --nav-text: #12151f; --nav-hover: #f5b733; --nav-active-bg: #0b1020; --nav-active-text: #ffd27a; }
+:root[data-theme="light"]    { --nav-bg: #1d3557; --nav-text: #ffffff; --nav-hover: #2c4f80; --nav-active-bg: #ffffff; --nav-active-text: #1d3557; }
+:root[data-theme="contrast"] { --nav-bg: #ffd400; --nav-text: #000000; --nav-hover: #ffe45c; --nav-active-bg: #000000; --nav-active-text: #ffd400; }
+:root[data-theme="cvd"]      { --nav-bg: #ffb000; --nav-text: #111111; --nav-hover: #ffc640; --nav-active-bg: #0e1622; --nav-active-text: #ffd27a; }
+:root[data-theme="soft"]     { --nav-bg: #3f5a73; --nav-text: #fffaf0; --nav-hover: #4d6b87; --nav-active-bg: #fffaf0; --nav-active-text: #3f5a73; }
 .pagebar {
-  display: flex; align-items: stretch; justify-content: space-between; gap: 10px;
-  background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--nav-bg); padding: 6px 12px;
 }
-.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
-  border: 0; background: transparent; cursor: pointer; white-space: nowrap;
-  padding: 8px 14px 9px; font-size: 0.82rem; font-weight: 700; color: var(--muted);
-  border-bottom: 3px solid transparent; display: inline-flex; align-items: center; gap: 7px;
+  border: 0; background: transparent; cursor: pointer; white-space: nowrap; border-radius: 9px;
+  padding: 7px 14px; font-size: 0.86rem; font-weight: 700; color: var(--nav-text);
+  display: inline-flex; align-items: center; gap: 7px; transition: background 0.15s;
 }
-.tab .n { font-size: 0.68rem; font-weight: 800; border: 1px solid var(--border); border-radius: 6px; padding: 0 5px; }
-.tab:hover { color: var(--text); background: var(--surface-2); }
-.tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--primary); background: var(--bg); }
-.tab[aria-selected="true"] .n { background: var(--primary); color: var(--primary-text); border-color: var(--primary); }
+.tab .n { font-size: 0.68rem; font-weight: 800; border: 1.5px solid currentColor; border-radius: 6px; padding: 0 5px; opacity: 0.85; }
+.tab:hover { background: var(--nav-hover); }
+.tab[aria-selected="true"] { background: var(--nav-active-bg); color: var(--nav-active-text); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); }
+.tab[aria-selected="true"] .n { opacity: 1; }
+.pagebar .pageinfo { color: var(--nav-text); opacity: 0.85; }
+.tab:focus-visible { outline-color: var(--nav-active-bg); }
 .pageinfo { align-self: center; font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
 
 /* Tile data table inside the pop-up */
@@ -480,14 +517,16 @@ select {
 @media (max-width: 900px) {
   body { overflow: auto; }
   .app { height: auto; min-height: 100dvh; }
-  .brand div > span, .tbtn .lbl, .pageinfo { display: none; }
+  .tbtn .lbl, .pageinfo { display: none; }
   .slicers { overflow-x: auto; flex-wrap: nowrap; }
   .slicer { flex: 0 0 auto; }
   .topbar { padding: 8px 10px; }
-  .brand strong { font-size: 0.92rem; }
+  .brand-title { font-size: 1.1rem; }
+  .brand .logo svg { width: 34px; height: 34px; }
+  .about-card { left: auto; right: -60px; width: 260px; }
   .canvas { overflow: visible; }
   .slicer select { min-width: 110px; }
-  .page, .p-overview, .p-three, .p-notes { grid-template-columns: 1fr 1fr; grid-template-rows: none; height: auto; }
+  .page, .p-overview, .p-three, .p-cols, .p-notes { grid-template-columns: 1fr 1fr; grid-template-rows: none; height: auto; }
   .page .hero, .page .viz, .page .viz.tall, .p-notes .note { grid-column: 1 / -1 !important; grid-row: auto !important; }
   .page .kpi { grid-column: span 1 !important; min-height: 92px; }
   .page .viz { height: 340px; }
@@ -655,3 +694,8 @@ kbd {
 
 .sr-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
 
+
+/* Text inside the donut charts */
+.donut-big { font-size: 22px; font-weight: 800; fill: var(--text); }
+.legend-name { font-size: 12.5px; font-weight: 600; fill: var(--text); }
+.seg-label { font-size: 12px; font-weight: 800; }
